@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dolmenwood Travel Tracker</title>
+<style>
+  :root {
+    --bg: #1a1408;
+    --panel: #211c10;
+    --border: #5a4a20;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --text: #d4c49a;
+    --text-dim: #8a7a55;
+    --red: #c44;
+    --green: #4a8;
+    --blue: #4af;
+    --orange: #e87;
+    --hex-hover: rgba(255,255,255,0.15);
+    --hex-stroke: rgba(255,200,50,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── LOG COLUMN ── */
+  #log-col {
+    width: 280px;
+    min-width: 220px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #log-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #2a2010;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #log-col-header span {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--gold);
+  }
+  #log-col-header button { width: auto; padding: 2px 8px; font-size: 0.7rem; margin: 0; }
+
+  /* ── LEFT PANEL ── */
+  #sidebar {
+    width: 340px;
+    min-width: 300px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #sidebar-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    background: #2a2010;
+  }
+  #sidebar-header h1 {
+    font-size: 1.15rem;
+    color: var(--gold-light);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  #sidebar-header p { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+  #sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #sidebar-body::-webkit-scrollbar { width: 6px; }
+  #sidebar-body::-webkit-scrollbar-track { background: var(--panel); }
+  #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .card {
+    background: #2a2010;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  .card h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  /* hex info */
+  .hex-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-bottom: 3px; }
+  .hex-info-row .label { color: var(--text-dim); }
+  .hex-info-row .value { color: var(--text); font-weight: bold; }
+
+  /* inputs */
+  label { font-size: 0.78rem; color: var(--text-dim); display: block; margin-bottom: 2px; }
+  input[type=number], select {
+    width: 100%;
+    background: #131006;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    margin-bottom: 6px;
+  }
+  input[type=checkbox] { margin-right: 5px; accent-color: var(--gold); }
+  .check-label { font-size: 0.82rem; color: var(--text); display: flex; align-items: center; margin-bottom: 4px; cursor: pointer; }
+
+  /* TP bar */
+  .tp-bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  /* TP manual spinner */
+  .tp-spinner-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+  .tp-spin-btn {
+    width: 24px; height: 24px; padding: 0; font-size: 1rem;
+    margin: 0; line-height: 1; flex-shrink: 0;
+    background: #3a2c10; border: 1px solid var(--gold);
+    color: var(--gold-light); border-radius: 3px; cursor: pointer;
+  }
+  .tp-spin-btn:hover { background: #5a4218; }
+  .tp-spin-val {
+    min-width: 28px; text-align: center;
+    font-size: 1rem; font-weight: bold; color: var(--gold-light);
+  }
+  .tp-bar-bg { flex: 1; height: 8px; background: #131006; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .tp-bar-fill { height: 100%; background: var(--gold); transition: width 0.3s; border-radius: 4px; }
+  .tp-label { font-size: 0.8rem; color: var(--gold-light); white-space: nowrap; }
+
+  /* terrain badge */
+  .terrain-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+  }
+  .t-light { background: #2a4a1a; color: #8de060; border: 1px solid #4a7a2a; }
+  .t-moderate { background: #3a3010; color: #d4a840; border: 1px solid #6a5a20; }
+  .t-severe { background: #4a1a0a; color: #e07050; border: 1px solid #7a3010; }
+  .t-aquatic { background: #0a2a4a; color: #60c0e0; border: 1px solid #1a5a8a; }
+  .t-road { background: #1a2a3a; color: #80a0c0; border: 1px solid #3a5a7a; }
+
+  /* buttons */
+  button {
+    background: #3a2c10;
+    border: 1px solid var(--gold);
+    color: var(--gold-light);
+    padding: 7px 12px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    margin-top: 4px;
+  }
+  button:hover { background: #5a4218; }
+  button.btn-primary {
+    background: #6a4a10;
+    border-color: var(--gold-light);
+    font-size: 0.88rem;
+    padding: 9px;
+  }
+  button.btn-primary:hover { background: #8a6218; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* map toggle row */
+  .map-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+  .map-toggle button { flex: 1; padding: 5px; font-size: 0.75rem; margin-top: 0; }
+  .map-toggle button.active { background: #5a4218; border-color: var(--gold-light); }
+
+  /* day / night toggle */
+  .day-night-row { display: flex; gap: 6px; margin-top: 6px; margin-bottom: 4px; }
+  .dn-btn { flex: 1; padding: 5px; font-size: 0.8rem; margin-top: 0; }
+  .dn-btn.active { background: #5a4218; border-color: var(--gold-light); }
+
+  /* ── LOG (now inside #log-col, full height) ── */
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  #log::-webkit-scrollbar { width: 4px; }
+  #log::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* Travel block: groups all entries for one travel action */
+  .log-block {
+    border-left: 2px solid var(--border);
+    padding: 4px 0 4px 8px;
+    margin-bottom: 8px;
+  }
+  .log-block-past {
+    opacity: 0.45;
+    transition: opacity 0.15s;
+  }
+  .log-block-past:hover { opacity: 1; }
+
+  .log-entry { margin-bottom: 3px; }
+
+  /* Highlighted value at end of a log line — thin border + padding */
+  .log-value {
+    display: inline-block;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0px 5px;
+    background: rgba(255,255,255,0.05);
+    font-weight: bold;
+  }
+  .log-value.roll   { border-color: #7a6030; color: var(--gold-light); }
+  .log-value.danger { border-color: #7a2020; color: #e06060; }
+  .log-value.ok     { border-color: #2a6040; color: #60c080; }
+  .log-value.warn   { border-color: #7a4020; color: var(--orange); }
+
+  /* Travel button overlay on map — bottom center */
+  #travel-btn-overlay {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    pointer-events: all;
+  }
+  #travel-btn-overlay button {
+    background: rgba(70, 48, 10, 0.95);
+    border: 1px solid var(--gold-light);
+    color: var(--gold-light);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 9px 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: auto;
+    margin: 0;
+    backdrop-filter: blur(3px);
+    transition: background 0.15s;
+    letter-spacing: 0.03em;
+  }
+  #travel-btn-overlay button:hover  { background: rgba(110, 75, 15, 0.97); }
+  #travel-btn-overlay button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .log-dim     { color: var(--text-dim); }
+  .log-roll    { color: var(--gold-light); font-weight: bold; }
+  .log-warn    { color: var(--orange); }
+  .log-danger  { color: var(--red); }
+  .log-ok      { color: var(--green); }
+  .log-info    { color: var(--blue); }
+  .log-section { color: var(--gold); font-weight: bold; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; }
+
+  /* ── MAP AREA ── */
+  #map-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #0d0d0d;
+    position: relative;  /* anchor for absolute overlays */
+  }
+  #map-toolbar {
+    padding: 6px 12px;
+    background: #18140c;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  #map-toolbar span { font-size: 0.78rem; color: var(--text-dim); }
+  #map-toolbar strong { color: var(--gold-light); }
+  #map-container {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+  }
+  #map-container.panning {
+    cursor: grabbing;
+  }
+  #map-container::-webkit-scrollbar { width: 8px; height: 8px; }
+  #map-container::-webkit-scrollbar-track { background: #0d0d0d; }
+  #map-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  #map-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  #map-img {
+    display: block;
+    max-width: none;
+  }
+  #hex-svg {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: all;
+    overflow: visible;
+  }
+  /* base highlight layers — invisible by default */
+  .hex-hl-outer { fill: transparent; stroke: none; pointer-events: none; }
+  .hex-hl-inner { fill: transparent; stroke: none; pointer-events: none; }
+
+  /* Current hex: thick orange outer + thin yellow inner */
+  .hex-hl-outer.current-outer {
+    fill: rgba(255, 130, 0, 0.22);
+    stroke: #d06000;
+    stroke-width: 28;
+  }
+  .hex-hl-inner.current-inner {
+    fill: transparent;
+    stroke: #ffd040;
+    stroke-width: 8;
+  }
+  /* Target hex: thick dark-green outer + thin light-green inner */
+  .hex-hl-outer.target-outer {
+    fill: rgba(20, 150, 50, 0.18);
+    stroke: #1a7a30;
+    stroke-width: 28;
+  }
+  .hex-hl-inner.target-inner {
+    fill: transparent;
+    stroke: #70ff70;
+    stroke-width: 8;
+  }
+
+  .hex-poly {
+    fill: transparent;
+    stroke: transparent;
+    cursor: pointer;
+    transition: fill 0.1s, stroke 0.1s;
+  }
+  .hex-poly:hover {
+    fill: var(--hex-hover);
+    stroke: var(--hex-stroke);
+    stroke-width: 8;
+  }
+  .hex-label {
+    fill: rgba(255,255,255,0.35);
+    font-size: 12px;
+    font-family: sans-serif;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .hex-label.current { fill: #ffd040; font-weight: bold; font-size: 18px; }
+  .hex-label.target  { fill: #70ff70; font-weight: bold; font-size: 18px; }
+
+  /* zoom controls — fixed to map-area, always visible */
+  #zoom-controls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 30;
+    pointer-events: all;
+  }
+  #zoom-controls button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 1.1rem;
+    margin: 0;
+    background: rgba(42,32,16,0.92);
+    backdrop-filter: blur(2px);
+  }
+
+  /* calibration panel — fixed to map-area, always visible */
+  #cal-panel {
+    position: absolute;
+    top: 44px;
+    right: 10px;
+    background: rgba(20,14,4,0.96);
+    border: 1px solid var(--gold);
+    border-radius: 5px;
+    padding: 10px 13px;
+    z-index: 31;
+    width: 260px;
+    font-size: 0.75rem;
+    display: none;
+    backdrop-filter: blur(2px);
+  }
+  #cal-panel.open { display: block; }
+  #cal-panel h4 { color: var(--gold-light); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .cal-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+  .cal-row label { color: var(--text-dim); width: 76px; flex-shrink: 0; font-size: 0.72rem; }
+  .cal-row input[type=range] { flex: 1; accent-color: var(--gold); height: 4px; min-width: 0; }
+  .cal-row input[type=number] {
+    width: 52px; flex-shrink: 0;
+    background: #131006; border: 1px solid var(--border);
+    color: var(--gold-light); padding: 2px 4px;
+    border-radius: 3px; font-size: 0.72rem; font-family: monospace;
+    text-align: right;
+  }
+  .cal-row input[type=number]:focus { border-color: var(--gold); outline: none; }
+  #cal-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 32;
+    width: auto;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    margin: 0;
+    background: rgba(42,32,16,0.92);
+    backdrop-filter: blur(2px);
+  }
+  #cal-output {
+    background: #0d0a04;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 5px 7px;
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-family: monospace;
+    line-height: 1.5;
+    white-space: pre;
+  }
+
+  /* weather badge */
+  .weather-flag {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 0.7rem;
+    margin-left: 3px;
+  }
+  .flag-I { background: #5a1010; color: #ff8080; border: 1px solid #8a2020; }
+  .flag-V { background: #1a1a5a; color: #8080ff; border: 1px solid #2a2a8a; }
+  .flag-W { background: #102a3a; color: #60b0d0; border: 1px solid #1a4a6a; }
+
+  /* scroll hint */
+  .hint { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>Dolmenwood Travel</h1>
+    <p>Referee Procedure Tracker</p>
+  </div>
+
+  <div id="sidebar-body">
+
+    <!-- MAP SWITCH -->
+    <div class="card">
+      <h3>Map Layer</h3>
+      <div class="map-toggle">
+        <button onclick="switchMap('blank')" id="btn-blank">Blank</button>
+        <button onclick="switchMap('player')" id="btn-player">Player's</button>
+        <button class="active" onclick="switchMap('referee')" id="btn-referee">Referee</button>
+        <button onclick="switchMap('vtt')" id="btn-vtt">VTT</button>
+        <button onclick="switchMap('vtt-s')" id="btn-vtt-s">VTT+Settlements</button>
+      </div>
+    </div>
+
+    <!-- PARTY STATUS -->
+    <div class="card" id="card-hex">
+      <h3>Position</h3>
+      <div class="hex-info-row">
+        <span class="label">Current Hex</span>
+        <span class="value" id="disp-current">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Terrain</span>
+        <span id="disp-terrain">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Region</span>
+        <span class="value" id="disp-region">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Lost chance</span>
+        <span class="value" id="disp-lost">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Encounter chance</span>
+        <span class="value" id="disp-enc">—</span>
+      </div>
+      <hr style="border-color:#3a2c10; margin:6px 0;">
+      <div class="hex-info-row">
+        <span class="label">Target Hex</span>
+        <span class="value" id="disp-target">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Target Terrain</span>
+        <span id="disp-target-terrain">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">TP cost (target)</span>
+        <span class="value" id="disp-tp-cost">—</span>
+      </div>
+      <p class="hint" style="margin-top:6px">Click map: 1st click = current, 2nd = target</p>
+    </div>
+
+    <!-- PARTY SETTINGS -->
+    <div class="card">
+      <h3>Party Settings</h3>
+      <label>Base Speed (feet/turn)</label>
+      <input type="number" id="inp-speed" value="40" min="10" max="120" step="10">
+      <label>Season</label>
+      <select id="inp-season">
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="autumn">Autumn</option>
+        <option value="winter">Winter</option>
+        <option value="hitching">Unseason: Hitching</option>
+        <option value="vague">Unseason: Vague</option>
+      </select>
+      <label class="check-label"><input type="checkbox" id="chk-road"> Road / Track</label>
+      <label class="check-label"><input type="checkbox" id="chk-forced"> Forced March (+50% TP, exhaustion)</label>
+      <label class="check-label"><input type="checkbox" id="chk-hunter"> Hunter in party (3-in-6 navigation)</label>
+      <label class="check-label"><input type="checkbox" id="chk-guide"> Hired Guide (4-in-6 navigation)</label>
+      <!-- Day / Night -->
+      <div class="day-night-row">
+        <button id="btn-day"   class="dn-btn active" onclick="setTimeOfDay('day')">☀ Day</button>
+        <button id="btn-night" class="dn-btn"        onclick="setTimeOfDay('night')">🌙 Night</button>
+      </div>
+      <label class="check-label" id="fire-row" style="display:none">
+        <input type="checkbox" id="chk-fire" checked> Camp fire lit
+      </label>
+    </div>
+
+    <!-- TRAVEL POINTS -->
+    <div class="card">
+      <h3>Travel Points Today</h3>
+      <div class="tp-bar-wrap">
+        <div class="tp-bar-bg"><div class="tp-bar-fill" id="tp-bar" style="width:100%"></div></div>
+        <span class="tp-label" id="tp-label">8 / 8</span>
+      </div>
+      <div class="tp-spinner-row">
+        <span class="label" style="flex:1">Adjust TP</span>
+        <button class="tp-spin-btn" onclick="adjustTP(-1)">−</button>
+        <span id="tp-current-disp" class="tp-spin-val">8</span>
+        <button class="tp-spin-btn" onclick="adjustTP(+1)">+</button>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Weather today</span>
+        <span id="disp-weather">—</span>
+      </div>
+      <button onclick="runWeather()">Roll Weather (2d6)</button>
+      <button onclick="resetTP()">Reset TP (New Day)</button>
+    </div>
+
+  </div><!-- /sidebar-body -->
+</div><!-- /sidebar -->
+
+<!-- ══════════════════════════════════════════════ LOG COLUMN -->
+<div id="log-col">
+  <div id="log-col-header">
+    <span>Session Log</span>
+    <button onclick="clearLog()">Clear</button>
+  </div>
+  <div id="log"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ MAP -->
+<div id="map-area">
+  <div id="map-toolbar">
+    <span>Click on map to select hexes &nbsp;|&nbsp; <strong>Yellow</strong> = current &nbsp;|&nbsp; <strong>Green</strong> = target</span>
+    <span id="toolbar-hover"></span>
+  </div>
+  <div id="map-container">
+    <div id="map-wrapper">
+      <img id="map-img" src="../../Maps/Referee/Dolmenwood Referee's Hex Map.png" alt="Dolmenwood Map">
+      <svg id="hex-svg"></svg>
+    </div>
+  </div>
+
+  <!-- TRAVEL BUTTON — bottom center of map, always visible -->
+  <div id="travel-btn-overlay">
+    <button id="btn-travel" onclick="runTravel()" disabled>Travel to Target Hex →</button>
+  </div>
+
+  <!-- ZOOM CONTROLS — anchored to #map-area, always visible -->
+  <div id="zoom-controls">
+    <button onclick="zoomIn()">+</button>
+    <button onclick="zoomOut()">−</button>
+    <button onclick="zoomReset()" title="Reset zoom">⟳</button>
+  </div>
+
+  <!-- CALIBRATION PANEL — anchored to #map-area, always visible -->
+  <button id="cal-toggle" onclick="toggleCal()">⚙ Kalibracja</button>
+  <div id="cal-panel">
+    <h4>⚙ Kalibracja siatki</h4>
+
+    <div class="cal-row">
+      <label>originX</label>
+      <input type="range"  id="c-ox"  min="0"    max="800"  step="1"  value="448" oninput="syncNum('c-ox','n-ox');applyCalibration()">
+      <input type="number" id="n-ox"  min="0"    max="800"  step="1"  value="448" oninput="syncRange('n-ox','c-ox');applyCalibration()">
+    </div>
+    <div class="cal-row">
+      <label>originY</label>
+      <input type="range"  id="c-oy"  min="0"    max="800"  step="1"  value="275" oninput="syncNum('c-oy','n-oy');applyCalibration()">
+      <input type="number" id="n-oy"  min="0"    max="800"  step="1"  value="275" oninput="syncRange('n-oy','c-oy');applyCalibration()">
+    </div>
+    <div class="cal-row">
+      <label>hexR</label>
+      <input type="range"  id="c-r"   min="60"   max="400"  step="1"    value="153"   oninput="syncNum('c-r','n-r');applyCalibration()">
+      <input type="number" id="n-r"   min="60"   max="400"  step="0.5"  value="153"   oninput="syncRange('n-r','c-r');applyCalibration()">
+    </div>
+    <div class="cal-row">
+      <label>colW</label>
+      <input type="range"  id="c-cw"  min="80"   max="600"  step="1"    value="233"   oninput="syncNum('c-cw','n-cw');applyCalibration()">
+      <input type="number" id="n-cw"  min="80"   max="600"  step="0.5"  value="232.5" oninput="syncRange('n-cw','c-cw');applyCalibration()">
+    </div>
+    <div class="cal-row">
+      <label>rowH</label>
+      <input type="range"  id="c-rh"  min="80"   max="600"  step="1"    value="268"   oninput="syncNum('c-rh','n-rh');applyCalibration()">
+      <input type="number" id="n-rh"  min="80"   max="600"  step="0.1"  value="268.3" oninput="syncRange('n-rh','c-rh');applyCalibration()">
+    </div>
+    <div class="cal-row">
+      <label>evenOffset</label>
+      <input type="range"  id="c-eo"  min="-400" max="400"  step="1"  value="135" oninput="syncNum('c-eo','n-eo');applyCalibration()">
+      <input type="number" id="n-eo"  min="-400" max="400"  step="1"  value="135" oninput="syncRange('n-eo','c-eo');applyCalibration()">
+    </div>
+    <div class="cal-row">
+      <label>hexRot (°)</label>
+      <input type="range"  id="c-rot" min="0"    max="90"   step="5"  value="0"   oninput="syncNum('c-rot','n-rot');applyCalibration()">
+      <input type="number" id="n-rot" min="0"    max="90"   step="1"  value="0"   oninput="syncRange('n-rot','c-rot');applyCalibration()">
+    </div>
+
+    <div id="cal-output">Porusz suwakiem aby zobaczyć wartości</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// HEX GRID GEOMETRY
+// The Dolmenwood map uses a FLAT-TOP offset hex grid.
+// Odd columns (01,03,05…) are baseline; even columns (02,04,06…)
+// are shifted UP by rowH/2.
+// Grid: columns 01–19, rows 01–12 (not all cells exist).
+// Calibrated to the blank map image at native resolution.
+// ═══════════════════════════════════════════════════════════════
+
+const HEX_CONFIG = {
+  // Native image: 5080 × 3627 px
+  // POINTY-TOP hex grid, 19 cols × 12 rows.
+  // ODD columns (01,03,05…): baseline row position.
+  // EVEN columns (02,04,06…): shifted DOWN by rowH/2.
+  //
+  // Calibrated by pixel-level scan of the blank map PNG:
+  //   Horizontal edge-pair at y=200 → col centers every 232px
+  //   col01 center x = 215 (midpoint of pair 95..335)
+  //   hexR = (252/2) / cos(0) from pointy-top equator = 146
+  //   hex01 center y = 342 (derived from slanted-edge intersection)
+  //   rowH = 2*hexR = 291 (pointy-top)
+  //   evenOffset = +146 (even cols shift down by rowH/2)
+
+  originX: 448,
+  originY: 275,
+  hexR: 153,
+  colW: 232.5,
+  rowH: 268.3,
+  evenOffset: 135,   // positive = even cols shift DOWN
+  hexRot: 0,         // 0=flat-top, 90=pointy-top — tune with calibration panel
+  imgW: 5080,
+  imgH: 3627,
+  cols: 19,
+  rows: 12,
+};
+
+// ── HEX DATABASE (from NotebookLM / Dolmenwood Campaign Book) ──
+// Format: "CCRRR": { terrain, region, lostChance, encChance, tpCost, terrainClass }
+// terrainClass: light | moderate | severe | aquatic | road
+// tpCost on roads = 2; light=2; moderate=3; severe=4
+// lostChance: on road = 0; light = 1; moderate = 2; severe = 3 (in-6)
+
+const HEXES = {
+"0101":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0102":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0103":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0105":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0106":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0107":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0108":{t:"Farmland",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0109":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0110":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0111":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0201":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0202":{t:"Swamp",r:"Northern Scratch",lc:3,ec:3,tp:4,tc:"severe"},
+"0203":{t:"Swamp",r:"Northern Scratch",lc:3,ec:3,tp:4,tc:"severe"},
+"0204":{t:"Bog",r:"Northern Scratch / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0205":{t:"Meadow",r:"High Wold / Dwelmfurgh",lc:1,ec:1,tp:2,tc:"light"},
+"0206":{t:"Tangled forest",r:"High Wold / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0207":{t:"Tangled forest",r:"High Wold / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0208":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0209":{t:"Craggy forest",r:"High Wold",lc:3,ec:3,tp:4,tc:"severe"},
+"0210":{t:"Hilly forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0211":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0301":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0302":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0303":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0304":{t:"Tangled forest",r:"Northern Scratch / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0305":{t:"Bog",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0306":{t:"Tangled forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0307":{t:"Hilly forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0308":{t:"Hilly forest",r:"High Wold / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0309":{t:"Hilly forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0310":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0311":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0312":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0401":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0402":{t:"Tangled forest",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0403":{t:"Tangled forest",r:"Northern Scratch / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0404":{t:"Tangled forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0405":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0406":{t:"Tangled forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0407":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0408":{t:"Hilly forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0409":{t:"Hilly forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0410":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0411":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0412":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0501":{t:"Bog",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0502":{t:"Tangled forest",r:"Northern Scratch",lc:2,ec:2,tp:3,tc:"moderate"},
+"0503":{t:"Thorny forest",r:"Dwelmfurgh / Northern Scratch",lc:3,ec:3,tp:4,tc:"severe"},
+"0504":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0506":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0507":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0508":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0509":{t:"Hilly forest",r:"High Wold / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0510":{t:"Tangled forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0512":{t:"Farmland",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0601":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"0602":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"0603":{t:"Thorny forest",r:"Dwelmfurgh / Northern Scratch",lc:3,ec:3,tp:4,tc:"severe"},
+"0604":{t:"Thorny forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0605":{t:"Aquatic",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"aquatic"},
+"0606":{t:"Aquatic / Craggy forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"aquatic"},
+"0607":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0608":{t:"Craggy forest",r:"Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0609":{t:"Hilly forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0610":{t:"Hills",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0611":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0612":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"0701":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"0702":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"0703":{t:"Tangled forest",r:"Dwelmfurgh / Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"0704":{t:"Tangled forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0705":{t:"Aquatic",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"aquatic"},
+"0706":{t:"Aquatic / Tangled forest",r:"Dwelmfurgh",lc:2,ec:2,tp:3,tc:"aquatic"},
+"0707":{t:"Craggy forest",r:"High Wold / Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0708":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0709":{t:"Farmland",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0710":{t:"Hills",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0711":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"0801":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"0802":{t:"Thorny forest",r:"Nagwood",lc:3,ec:3,tp:4,tc:"severe"},
+"0803":{t:"Thorny forest",r:"Nagwood / Dwelmfurgh",lc:3,ec:3,tp:4,tc:"severe"},
+"0804":{t:"Tangled forest",r:"Aldweald / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"moderate"},
+"0805":{t:"Aquatic / Tangled forest",r:"Aldweald / Dwelmfurgh",lc:2,ec:2,tp:3,tc:"aquatic"},
+"0806":{t:"Swamp",r:"Dwelmfurgh / Hag's Addle",lc:3,ec:3,tp:4,tc:"severe"},
+"0807":{t:"Craggy forest",r:"High Wold",lc:3,ec:3,tp:4,tc:"severe"},
+"0808":{t:"Open forest",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0809":{t:"Open forest",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0810":{t:"Hills",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0811":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"0812":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"0901":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"0902":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"0903":{t:"Thorny forest",r:"Nagwood",lc:3,ec:3,tp:4,tc:"severe"},
+"0904":{t:"Tangled forest",r:"Valley of Wise Beasts",lc:2,ec:2,tp:3,tc:"moderate"},
+"0905":{t:"Craggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"0906":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"0907":{t:"Swamp",r:"Hag's Addle",lc:3,ec:3,tp:4,tc:"severe"},
+"0909":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"0910":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"0911":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"1001":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"1002":{t:"Bog",r:"Fever Marsh",lc:2,ec:2,tp:3,tc:"moderate"},
+"1003":{t:"Thorny forest",r:"Nagwood",lc:3,ec:3,tp:4,tc:"severe"},
+"1004":{t:"Tangled forest",r:"Valley of Wise Beasts",lc:2,ec:2,tp:3,tc:"moderate"},
+"1005":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1006":{t:"Craggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1007":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1008":{t:"Swamp",r:"Hag's Addle",lc:3,ec:3,tp:4,tc:"severe"},
+"1009":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"1010":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"1011":{t:"Tangled forest",r:"High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"1012":{t:"Meadow",r:"High Wold",lc:1,ec:1,tp:2,tc:"light"},
+"1101":{t:"Tangled forest",r:"Nagwood",lc:2,ec:2,tp:3,tc:"moderate"},
+"1102":{t:"Bog",r:"Fever Marsh",lc:2,ec:2,tp:3,tc:"moderate"},
+"1103":{t:"Bog",r:"Fever Marsh",lc:2,ec:2,tp:3,tc:"moderate"},
+"1104":{t:"Tangled forest",r:"Valley of Wise Beasts",lc:2,ec:2,tp:3,tc:"moderate"},
+"1105":{t:"Craggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1106":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1107":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1108":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1109":{t:"Swamp",r:"Hag's Addle",lc:3,ec:3,tp:4,tc:"severe"},
+"1110":{t:"Tangled forest",r:"High Wold / Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1111":{t:"Tangled forest",r:"Aldweald / High Wold",lc:2,ec:2,tp:3,tc:"moderate"},
+"1201":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1202":{t:"Swamp",r:"Fever Marsh",lc:3,ec:3,tp:4,tc:"severe"},
+"1203":{t:"Tangled forest",r:"Valley of Wise Beasts",lc:2,ec:2,tp:3,tc:"moderate"},
+"1204":{t:"Craggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1205":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1206":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1207":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1208":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1209":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1210":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+"1211":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+"1212":{t:"Meadow",r:"Tithelands",lc:1,ec:1,tp:2,tc:"light"},
+"1301":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1302":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1303":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1304":{t:"Craggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1305":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1306":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1307":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+"1308":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+"1309":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1310":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1311":{t:"Meadow",r:"Tithelands",lc:1,ec:1,tp:2,tc:"light"},
+"1401":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1402":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1403":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1404":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1405":{t:"Fungal forest",r:"Mulchgrove",lc:1,ec:1,tp:2,tc:"light"},
+"1406":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1407":{t:"Meadow",r:"Tithelands",lc:1,ec:1,tp:2,tc:"light"},
+"1408":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1409":{t:"Meadow",r:"Tithelands",lc:1,ec:1,tp:2,tc:"light"},
+"1410":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1501":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1502":{t:"Hilly forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1503":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1504":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1505":{t:"Fungal forest",r:"Mulchgrove",lc:1,ec:1,tp:2,tc:"light"},
+"1507":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1509":{t:"Farmland",r:"Tithelands",lc:1,ec:1,tp:2,tc:"light"},
+"1602":{t:"Hilly forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1603":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1604":{t:"Boggy forest",r:"Mulchgrove",lc:3,ec:3,tp:4,tc:"severe"},
+"1605":{t:"Fungal forest",r:"Mulchgrove",lc:1,ec:1,tp:2,tc:"light"},
+"1606":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1607":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+"1701":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1702":{t:"Hilly forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1703":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1704":{t:"Fungal forest",r:"Mulchgrove",lc:1,ec:1,tp:2,tc:"light"},
+"1705":{t:"Boggy forest",r:"Mulchgrove",lc:3,ec:3,tp:4,tc:"severe"},
+"1706":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+"1707":{t:"Hilly forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1801":{t:"Hilly forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1802":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1803":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1804":{t:"Boggy forest",r:"Aldweald",lc:3,ec:3,tp:4,tc:"severe"},
+"1805":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1901":{t:"Hills",r:"Table Downs",lc:1,ec:1,tp:2,tc:"light"},
+"1903":{t:"Hilly forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1905":{t:"Tangled forest",r:"Aldweald",lc:2,ec:2,tp:3,tc:"moderate"},
+"1906":{t:"Open forest",r:"Aldweald",lc:1,ec:1,tp:2,tc:"light"},
+};
+
+// ── WEATHER TABLES ──
+const WEATHER = {
+  spring: {
+    2:"Cold, gentle snow (W)",3:"Chilly, damp (W)",4:"Windy, cloudy",5:"Brisk, clear",
+    6:"Clement, cheery",7:"Warm, sunny",8:"Bright, fresh",9:"Blustery, drizzle (W)",
+    10:"Pouring rain (V,W)",11:"Gloomy, cool",12:"Chill mist (V)"
+  },
+  summer: {
+    2:"Cool winds",3:"Low cloud, mist (V)",4:"Warm, gentle rain (W)",5:"Brooding thunder",
+    6:"Balmy, clear",7:"Hot, humid",8:"Overcast, muggy",9:"Sweltering, still",
+    10:"Baking, dry",11:"Warm wind",12:"Thunderstorm (V,W)"
+  },
+  autumn: {
+    2:"Torrential rain (V,W)",3:"Rolling fog (V)",4:"Driving rain (V,W)",5:"Bracing wind",
+    6:"Balmy, clement",7:"Clear, chilly",8:"Drizzle, damp (W)",9:"Cloudy, misty (V)",
+    10:"Brooding clouds",11:"Frosty, chill",12:"Icy, gentle snow (W)"
+  },
+  winter: {
+    2:"Deep freeze, hoarfrost",3:"Snowstorm (I,V,W)",4:"Relentless wind",5:"Bitter, silent",
+    6:"Frigid, icy",7:"Clear, cold",8:"Freezing rain (V,W)",9:"Cold wind, gloomy",
+    10:"Frigid mist (V)",11:"Icy, steady snow (V,W)",12:"Relentless blizzard (I,V,W)"
+  },
+  hitching: {
+    2:"Torrential rain (V,W)",3:"Clear, fresh dew (W)",4:"Sleepy, purple mist (V)",
+    5:"Interminable drizzle (W)",6:"Balmy mist (V)",7:"Thick fog, hot (V)",
+    8:"Misty, seeping damp (V,W)",9:"Hazy fog, dripping (V,W)",10:"Sticky dew drips (W)",
+    11:"Gloomy, shadows drip",12:"Befuddling green fog (V)"
+  },
+  vague: {
+    2:"Hoarfrost, freezing fog (V)",3:"Steady snow, icy mist (V,W)",4:"Low mist, writhing soil",
+    5:"Sickly, yellow mist (V)",6:"Thick, rolling fog (V)",7:"Freezing fog (V)",
+    8:"Chill mist, winds wail (V)",9:"Icy mist, eerie howling (V)",10:"Violet mist rises (V)",
+    11:"Blizzard, earth tremors (I,V,W)",12:"Blizzard, dense fog (I,V,W)"
+  }
+};
+
+// ── LOST CONSEQUENCES ──
+const LOST_TABLE = {
+  3:"Lost in time – 1d4+1 days pass",
+  4:"Fairy Road – party stumbles onto a random fairy road",
+  5:"Circles – end the day in the starting hex",
+  6:"Deviation 90° LEFT",
+  7:"Deviation 90° LEFT",
+  8:"Deviation 45° LEFT",
+  9:"Deviation 45° LEFT",
+  10:"Uncertain paths – all TP costs doubled today",
+  11:"Uncertain paths – all TP costs doubled today",
+  12:"Deviation 45° RIGHT",
+  13:"Deviation 45° RIGHT",
+  14:"Deviation 90° RIGHT",
+  15:"Deviation 90° RIGHT",
+  16:"Circles – end the day in the starting hex",
+  17:"Nodal Stone – knocked unconscious, wake near random nodal stone",
+  18:"Bewildering Fog – emerge in random hex ≥2 hexes away"
+};
+
+// ── ENCOUNTER TYPE TABLE (1d8) ──
+// Source: Dolmenwood Campaign Book – Encounter Type table
+// Columns: [Road/Track day, Wild day, Night (fire), Night (no fire)]
+const ENC_TYPE_TABLE = [
+  null,
+  ["Animal",   "Animal",   "Monster", "Animal"],   // 1
+  ["Monster",  "Monster",  "Monster", "Animal"],   // 2
+  ["Mortal",   "Mortal",   "Mortal",  "Monster"],  // 3
+  ["Mortal",   "Sentient", "Mortal",  "Monster"],  // 4
+  ["Sentient", "Sentient", "Sentient","Regional"], // 5
+  ["Sentient", "Regional", "Sentient","Regional"], // 6
+  ["Regional", "Regional", "Regional","Regional"], // 7
+  ["Regional", "Regional", "Regional","Regional"], // 8
+];
+
+// ── COMMON ENCOUNTER TABLES (d20) ──
+// Source: Dolmenwood Campaign Book – Common Encounters
+const ENC_COMMON = {
+  Animal: [null,
+    "Bat, Giant* (1d10)","Bear* (1d4)","Boar* (1d6)","Burrowing Beetle* (2d4)",
+    "Carrion Worm* (1d3)","Centipede, Giant* (1d8)","False Unicorn (3d4)",
+    "Fire Beetle, Giant* (2d6)","Fly, Giant* (2d6)","Insect Swarm* (1d3)",
+    "Rapacious Beetle* (2d4)","Rat, Giant—Snail, Giant—Mutant (1d3)",
+    "Red Deer (3d10)","Shaggy Mammoth* (2d8)","Snake—Adder* (1d8)",
+    "Stirge* (2d6)","Toad, Giant* (1d4)","Weasel, Giant* (1d6)",
+    "Wolf* (3d6)","Yegril* (3d8)"
+  ],
+  Monster: [null,
+    "Ant, Giant* (3d4)","Centaur—Bestial (1)","Cockatrice (1d4)","Ghoul (2d4)",
+    "Griffon* (2d8)","Headless Rider (1d4)","Mogglewump (1)","Mugwudge (1d4)",
+    "Ogre (1d6)","Owlbear* (1d4)","Root Thing (1d4)","Spinning Spider, Giant—Mutant (1d3)",
+    "Stirge* (2d6)","Treowere (1d8)","Werewolf (1d6)","Wolf, Dire* (2d4)",
+    "Wyrm—Black Bile (1)","Wyrm—Blood (1)","Wyrm—Yellow Bile (1)","Yickerwill (1d6)"
+  ],
+  Mortal: [null,
+    "Adventuring Party (2d6)","Breggle—Shorthorn (3d10)","Crookhorn (3d10)","Drune—Cottager (1d4)",
+    "Fighter† (2d6)","Fortune-Teller† (1d3)","Friar† (1d6)","Hunter† (3d6)",
+    "Knight† (2d6)","Lost Soul† (1d4)","Magician† (1d4)","Merchant† (1d20)",
+    "Pedlar† (1d4)","Pilgrim† (4d8)","Priest† (1d6)","Thief (Bandit)† (3d10)",
+    "Thief (Bandit)† (3d10)","Troll (1d3)","Villager† (2d10)","Witch Owl (1d6)"
+  ],
+  Sentient: [null,
+    "Barrowbogey (2d6)","Breggle—Shorthorn (3d10)","Cleric† (1d20)","Deorling—Stag (1d6)",
+    "Elf—Courtier or Knight (1d4)","Elf—Wanderer (1d6)","Goblin (2d6)","Goblin (2d6)",
+    "Mossling (2d8)","Nutcap (2d6)","Redcap (2d6)","Scarecrow (1d4)",
+    "Scrabey (1d6)","Shape-Stealer (1d6)","Sprite (3d6)","Talking Animal (1d4)",
+    "Treowere (1d8)","Troll (1d3)","Wodewose (1d6)","Woodgrue (3d6)"
+  ]
+};
+
+// ── REGIONAL ENCOUNTER TABLES (d20) ──
+// Source: Dolmenwood Campaign Book – Regional Encounters
+// Key = region name (matches HEXES[id].r, or partial match)
+const ENC_REGIONAL = {
+  "Aldweald": [null,
+    "Antler Wraith (2d4)","Breggle—Shorthorn (3d10)","Centaur—Sylvan (2d6)","Deorling—Doe (4d4)",
+    "Elf—Wanderer (1d6)","Fly, Giant* (2d6)","Fairy Horse (1)","Gelatinous Hulk (1d4)",
+    "Gloam (1)","Goblin (2d6)","Grimalkin (1d12)","Madtom (1d12)",
+    "Mugwudge (1d4)","Pedlar† (1d4)","Redcap (2d6)","Sprite (3d6)",
+    "Thief (Pirate)† (3d10)","Wild Hunt (see p355)","Witch (1d6)","Woodgrue (3d6)"
+  ],
+  "Aquatic": [null,
+    "Adventuring Party","Angler† (2d4)","Boggin (1d6)","Catfish, Giant* (1d2)",
+    "Eel—Wanderer (1d6)","Fly, Giant* (2d6)","Insect Swarm* (1d3)","Kelpie (1)",
+    "Killer Bee* (2d6)","Knight, Giant* (1d4)","Merchant† (1d20)","Merfolk (1d4)",
+    "Pedlar† (1d4)","Pike, Giant* (1d4)","Stirge* (2d6)","Thief (Pirate)† (3d10)",
+    "Unicorn—Blessed (1d6)","Toad, Giant* (1d4)","Water Termite, Giant* (1d3)","Wyrm—Phlegm (1)"
+  ],
+  "Dwelmfurgh": [null,
+    "Antler Wraith (2d4)","Basilisk (1d6)","Brambling (1d4)","Centipede, Giant* (1d8)",
+    "Deorling—Doe (4d4)","Drune—Audrune (1)","Drune—Braithmaid (1d4)","Drune—Cottager (2d6)",
+    "Drune—Drunewife (1)","Lost Soul† (1d4)","Madtom (1d12)","Shadow (1d8)",
+    "Skeleton (3d6)","Spinning Spider, Giant* (1d3)","Thief (Bandit)† (3d10)","Wicker Giant (1)",
+    "Wight (1d6)","Witch (1d6)","Wyrm—Yellow Bile (1)","Woodgrue (3d6)"
+  ],
+  "Fever Marsh": [null,
+    "Bat, Vampire* (1d10)","Black Tentacles (1d4)","Bog Salamander (1d3)","Centaur—Bestial (1)",
+    "Fly, Giant* (2d6)","Fly, Giant* (2d6)","Galosher (2d6)","Gelatinous Hulk (1d4)",
+    "Harridan (1d3)","Insect Swarm* (1d3)","Leech, Giant* (1d4)","Madtom (1d12)",
+    "Marsh Lantern (1d12)","Mugwudge (1d4)","Redcap (2d6)","Shadow (1d8)",
+    "Toad, Giant* (1d4)","Troll (1d3)","Wyrm—Phlegm (1)","Wyrm—Phlegm (1)"
+  ],
+  "Hag's Addle": [null,
+    "Banshee (1)","Bat, Vampire* (1d10)","Black Tentacles (1d4)","Bog Corpse (2d4)",
+    "Bog Salamander (1d3)","Boggy Forest (2d6)","Cleric† (1d20)","Drune—Braithmaid (1d4)",
+    "Ghoul (2d4)","Leech, Giant* (1d4)","Marsh Lantern (1d12)","Mugwudge (1d4)",
+    "Shadow (1d8)","Swamp Spider, Giant* (1d3)","Swamp Sloth* (1d6)","The Hag (see p82)",
+    "Toad, Giant* (1d4)","Troll (1d4)","Unicorn—Corrupt (1d6)","Wronguncle (1)"
+  ],
+  "High Wold": [null,
+    "Barrowbogey (2d6)","Breggle—Longhorn (2d4)","Breggle—Shorthorn (3d10)","Breggle—Shorthorn (3d10)",
+    "Criert (1d6)","Criert (1d6)","Drune—Braithmaid (1d4)","Elf—Knight (1d4)",
+    "Goblin (2d6)","Grimalkin (1d4)","Merchant† (1d20)","Priest† (1d6)",
+    "Shadow (1d8)","Swamp Spider, Giant* (1d3)","Treowere (1d8)","Scrabey (1d6)",
+    "Thief (Bandit)† (3d10)","Redslob (1d4)","Witch Owl (1d6)","Woodgrue (3d6)"
+  ],
+  "Mulchgrove": [null,
+    "Bat, Vampire* (1d10)","Bog Corpse (2d4)","Bog Salamander (1d3)","Braincork (1d8)",
+    "Criert (1d6)","Gelatinous Hulk (1d4)","Lost Soul† (1d4)","Mossling (2d8)",
+    "Mossling (2d8)","Mossling (4d8)","Mould Oracle (1d3)","Ochre Slime-Hulk (1)",
+    "Onyx Blob (1)","Pook Morel (2d10)","Pook Morel (2d10)","Redslob (1d4)",
+    "Redslob (1d4)","Unicorn—Corrupt (1d6)","Wodewose (1d6)","Wronguncle (1)"
+  ],
+  "Nagwood": [null,
+    "Atanuwf (see p45)","Bat, Vampire* (1d10)","Bog Corpse (2d4)","Centaur—Bestial (1)",
+    "Crookhorn (3d10)","Crookhorn (3d10)","Crookhorn (3d10)","Crookhorn (6d10)",
+    "Harridan (1d3)","Harridan (1d3)","Manticore (1d4)","Ochre Slime-Hulk (1)",
+    "Ogre (1d6)","Ogre (1d6)","Owlbear* (1d4)","Redslob (1d4)",
+    "Snail, Giant—Mutant (1d3)","Spinning Spider, Giant (1d4)","Treowere (Chaotic) (1d8)","Wyrm—Black Bile (1)"
+  ],
+  "Northern Scratch": [null,
+    "Banshee (1)","Crookhorn (3d10)","Black Tentacles (1d4)","Deorling—Doe (4d4)",
+    "Bog Corpse (2d4)","Fly, Giant* (2d6)","Fomorian (1d3)","Gloam (1)",
+    "Gloam (1)","Harridan (1d4)","Leech, Giant* (1d4)","Madtom (1d12)",
+    "Marsh Lantern (1d12)","Shadow (1d8)","Spectre (1d4)","Scarecrow (1d4)",
+    "Shadow (1d8)","Spectre (1d4)","Wight (1d6)","Witch Owl (1d6)"
+  ],
+  "Table Downs": [null,
+    "Banshee (1)","Crookhorn (3d10)","Deorling—Doe (4d4)","Elf—Wanderer (1d6)",
+    "Fighter† (2d6)","Friar† (1d6)","Gloam (1)","Ghoul (1d4)",
+    "Gloam (1)","Headless Rider (1d4)","Killer Bee* (2d6)","Lost Soul† (1d4)",
+    "Mossling (2d8)","Merchant† (1d20)","Pook Morel (2d10)","Scrabey (1d6)",
+    "Skeleton (3d6)","Wight (1d6)","Villager† (2d10)","Woodgrue (3d6)"
+  ],
+  "Tithelands": [null,
+    "Breggle—Shorthorn (3d10)","Cobbin (1d4)","Cobbin (1d4)","Cobbin (1d4)",
+    "Crookhorn (3d10)","Crookhorn (3d10)","Gloam (1)","Goblin (2d6)",
+    "Goblin (2d6)","Grimalkin (1d4)","Knight† (2d6)","Merchant† (1d20)",
+    "Mossling (2d8)","Ogre (1d6)","Owlbear* (1d4)","Scrabey (1d6)",
+    "Sprite (3d6)","Sprite (3d6)","Troll (1d3)","Woodgrue (3d6)"
+  ],
+  "Valley of Wise Beasts": [null,
+    "Cobbin (1d4)","Cobbin (1d4)","Cobbin (1d4)","Cobbin (3d8)",
+    "Crookhorn (3d10)","Goblin (2d6)","Goblin (2d6)","Grimalkin (1d4)",
+    "Grimalkin (1d4)","Knight† (2d6)","Lost Soul† (1d4)","Mossling (2d8)",
+    "Merchant† (1d20)","Ogre (1d6)","Owlbear* (1d4)","Scrabey (1d6)",
+    "Deorling—Stag (1d6)","Grimalkin (1d4)","Unicorn—Corrupt (1d6)","Woodgrue (3d6)"
+  ]
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let state = {
+  currentHex: null,
+  targetHex: null,
+  clickPhase: 1, // 1 = selecting current, 2 = selecting target
+  tpMax: 8,
+  tpLeft: 8,
+  weatherFlags: { I: false, V: false, W: false },
+  weatherText: null,
+  scale: 1.0,
+  isNight: false,
+  hasFire: true,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// HEX GRID MATH
+// ═══════════════════════════════════════════════════════════════
+function hexCenter(col, row) {
+  // col: 1-based, row: 1-based
+  // Pointy-top grid: even columns shift DOWN by evenOffset (= rowH/2)
+  const c = HEX_CONFIG;
+  const x = c.originX + (col - 1) * c.colW;
+  const y = c.originY + (row - 1) * c.rowH + (col % 2 === 0 ? c.evenOffset : 0);
+  return { x, y };
+}
+
+function hexVertices(cx, cy) {
+  const r   = HEX_CONFIG.hexR;
+  const rot = HEX_CONFIG.hexRot !== undefined ? HEX_CONFIG.hexRot : 90;
+  // rot=0  → flat-top  (first vertex pointing RIGHT)
+  // rot=90 → pointy-top (first vertex pointing UP)
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i + rot);
+    pts.push([cx + r * Math.cos(angle), cy - r * Math.sin(angle)]);
+  }
+  return pts;
+}
+
+function hexId(col, row) {
+  return String(col).padStart(2,'0') + String(row).padStart(2,'0');
+}
+
+function hexFromId(id) {
+  return { col: parseInt(id.slice(0,2)), row: parseInt(id.slice(2,4)) };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SVG OVERLAY GENERATION
+// ═══════════════════════════════════════════════════════════════
+function makePoly(pts, cls, id) {
+  const p = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  p.setAttribute('points', pts);
+  p.setAttribute('class', cls);
+  if (id) p.setAttribute('data-hex', id);
+  return p;
+}
+
+function buildOverlay() {
+  const img = document.getElementById('map-img');
+  const svg = document.getElementById('hex-svg');
+  const c = HEX_CONFIG;
+
+  const W = img.naturalWidth  || c.imgW;
+  const H = img.naturalHeight || c.imgH;
+  svg.setAttribute('width',   W);
+  svg.setAttribute('height',  H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  // Layer groups: outer highlights behind, inner highlights, clickable on top
+  const gOuter  = document.createElementNS('http://www.w3.org/2000/svg','g');
+  gOuter.setAttribute('id','layer-outer');
+  const gInner  = document.createElementNS('http://www.w3.org/2000/svg','g');
+  gInner.setAttribute('id','layer-inner');
+  const gHit    = document.createElementNS('http://www.w3.org/2000/svg','g');
+  gHit.setAttribute('id','layer-hit');
+  const gLabels = document.createElementNS('http://www.w3.org/2000/svg','g');
+  gLabels.setAttribute('id','layer-labels');
+  svg.appendChild(gOuter);
+  svg.appendChild(gInner);
+  svg.appendChild(gHit);
+  svg.appendChild(gLabels);
+
+  for (let col = 1; col <= c.cols; col++) {
+    for (let row = 1; row <= c.rows; row++) {
+      const id = hexId(col, row);
+      const { x, y } = hexCenter(col, row);
+      const verts = hexVertices(x, y);
+      const pts = verts.map(v => v.join(',')).join(' ');
+
+      // Outer highlight polygon (thick stroke, hidden by default)
+      const outer = makePoly(pts, 'hex-hl-outer', null);
+      outer.setAttribute('data-hl-outer', id);
+      gOuter.appendChild(outer);
+
+      // Inner highlight polygon (thin stroke, hidden by default)
+      const inner = makePoly(pts, 'hex-hl-inner', null);
+      inner.setAttribute('data-hl-inner', id);
+      gInner.appendChild(inner);
+
+      // Clickable polygon (transparent, captures events)
+      const poly = makePoly(pts, 'hex-poly', id);
+      poly.addEventListener('click', () => onHexClick(id));
+      poly.addEventListener('mouseenter', () => onHexHover(id));
+      poly.addEventListener('mouseleave', () => onHexLeave());
+      gHit.appendChild(poly);
+
+      // Label
+      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('x', x);
+      label.setAttribute('y', y + 1);
+      label.setAttribute('class', 'hex-label');
+      label.setAttribute('data-label', id);
+      label.textContent = id;
+      gLabels.appendChild(label);
+    }
+  }
+}
+
+function setHexHighlight(id, type) {
+  // type: 'current' | 'target' | null
+  const outer = document.querySelector(`[data-hl-outer="${id}"]`);
+  const inner = document.querySelector(`[data-hl-inner="${id}"]`);
+  const label = document.querySelector(`[data-label="${id}"]`);
+  if (!outer) return;
+  // clear
+  outer.setAttribute('class','hex-hl-outer');
+  inner.setAttribute('class','hex-hl-inner');
+  if (label) { label.classList.remove('current','target'); }
+  if (type === 'current') {
+    outer.classList.add('current-outer');
+    inner.classList.add('current-inner');
+    if (label) label.classList.add('current');
+  } else if (type === 'target') {
+    outer.classList.add('target-outer');
+    inner.classList.add('target-inner');
+    if (label) label.classList.add('target');
+  }
+}
+
+function refreshOverlay() {
+  // Clear all highlights
+  document.querySelectorAll('.hex-hl-outer').forEach(p => {
+    p.setAttribute('class','hex-hl-outer');
+  });
+  document.querySelectorAll('.hex-hl-inner').forEach(p => {
+    p.setAttribute('class','hex-hl-inner');
+  });
+  document.querySelectorAll('[data-label]').forEach(l => {
+    l.classList.remove('current','target');
+  });
+  if (state.currentHex) setHexHighlight(state.currentHex, 'current');
+  if (state.targetHex)  setHexHighlight(state.targetHex,  'target');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════
+function onHexClick(id) {
+  if (state.clickPhase === 1) {
+    state.currentHex = id;
+    state.targetHex = null;
+    state.clickPhase = 2;
+    log(`<span class="log-info">[Click] Current hex set to <strong>${id}</strong></span>`);
+  } else {
+    if (id === state.currentHex) {
+      // clicking same hex resets target phase
+      state.targetHex = null;
+      state.clickPhase = 2;
+    } else {
+      state.targetHex = id;
+      state.clickPhase = 1; // next click sets a new current
+      log(`<span class="log-info">[Click] Target hex set to <strong>${id}</strong></span>`);
+    }
+  }
+  updateSidebar();
+  refreshOverlay();
+}
+
+function onHexHover(id) {
+  const h = HEXES[id];
+  const desc = h ? `${id} – ${h.t}, ${h.r}` : `${id} – (no data)`;
+  document.getElementById('toolbar-hover').textContent = desc;
+}
+function onHexLeave() {
+  document.getElementById('toolbar-hover').textContent = '';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SIDEBAR UPDATE
+// ═══════════════════════════════════════════════════════════════
+function updateSidebar() {
+  const ch = state.currentHex;
+  const th = state.targetHex;
+  const hc = ch ? HEXES[ch] : null;
+  const ht = th ? HEXES[th] : null;
+
+  document.getElementById('disp-current').textContent = ch || '—';
+  document.getElementById('disp-terrain').innerHTML = hc ? terrainBadge(hc) : '—';
+  document.getElementById('disp-region').textContent = hc ? hc.r : '—';
+  document.getElementById('disp-lost').textContent = hc ? `${hc.lc}-in-6` : '—';
+  document.getElementById('disp-enc').textContent = hc ? `${hc.ec}-in-6` : '—';
+
+  document.getElementById('disp-target').textContent = th || '—';
+  document.getElementById('disp-target-terrain').innerHTML = ht ? terrainBadge(ht) : '—';
+
+  // TP cost for target
+  let tpCost = '—';
+  if (ht) {
+    const onRoad = document.getElementById('chk-road').checked;
+    let cost = onRoad ? 2 : ht.tp;
+    if (state.weatherFlags.I) cost += 2;
+    tpCost = cost;
+  }
+  document.getElementById('disp-tp-cost').textContent = tpCost === '—' ? '—' : `${tpCost} TP`;
+
+  // TP bar
+  updateTPBar();
+
+  // travel button
+  const canTravel = ch && th && state.tpLeft > 0;
+  document.getElementById('btn-travel').disabled = !canTravel;
+}
+
+function terrainBadge(h) {
+  const cls = { light:'t-light', moderate:'t-moderate', severe:'t-severe', aquatic:'t-aquatic', road:'t-road' };
+  return `<span class="terrain-badge ${cls[h.tc] || 't-light'}">${h.t}</span>`;
+}
+
+function updateTPBar() {
+  const max = state.tpMax;
+  const left = Math.max(0, state.tpLeft);
+  const pct = max > 0 ? Math.min(100, (left / max) * 100) : 0;
+  document.getElementById('tp-bar').style.width = pct + '%';
+  document.getElementById('tp-label').textContent = `${left} / ${max}`;
+  document.getElementById('tp-current-disp').textContent = left;
+  // color
+  const bar = document.getElementById('tp-bar');
+  bar.style.background = pct > 50 ? '#c9a84c' : pct > 25 ? '#e87040' : '#c04040';
+}
+
+function adjustTP(delta) {
+  state.tpLeft = Math.max(0, Math.min(state.tpMax, state.tpLeft + delta));
+  updateTPBar();
+  updateSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DICE
+// ═══════════════════════════════════════════════════════════════
+function d(n) { return Math.floor(Math.random() * n) + 1; }
+function rollNd6(n) {
+  const rolls = [];
+  for (let i = 0; i < n; i++) rolls.push(d(6));
+  return { total: rolls.reduce((a,b)=>a+b,0), rolls };
+}
+function roll2d6() { return rollNd6(2); }
+function roll3d6() { return rollNd6(3); }
+function roll1d8() { return d(8); }
+function roll1d20() { return d(20); }
+function rollXd6chance(x) {
+  // returns true if any die ≤ x (i.e. "x-in-6 chance on 1d6")
+  const r = d(6);
+  return { hit: r <= x, roll: r };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WEATHER
+// ═══════════════════════════════════════════════════════════════
+function runWeather() {
+  const season = document.getElementById('inp-season').value;
+  const { total, rolls } = roll2d6();
+  const table = WEATHER[season];
+  const result = table[total];
+
+  state.weatherFlags = {
+    I: result.includes('(I') || result.includes(',I'),
+    V: result.includes('V)') || result.includes('V,') || result.includes('(V'),
+    W: result.includes('W)') || result.includes('W,') || result.includes('(W')
+  };
+  state.weatherText = result;
+
+  // update TP based on flags
+  recalcTP();
+
+  // display
+  const flags = Object.entries(state.weatherFlags)
+    .filter(([,v]) => v)
+    .map(([k]) => `<span class="weather-flag flag-${k}">${k}</span>`)
+    .join('');
+
+  document.getElementById('disp-weather').innerHTML =
+    `<span class="log-roll">${result}</span> ${flags}`;
+
+  log(`<span class="log-section">── WEATHER ──</span>`);
+  log(`<span class="log-roll">2d6 [${rolls.join('+')}] = ${total}</span> → ${result}${flags}`);
+  if (state.weatherFlags.I) log(`<span class="log-warn">Travel Impeded: −2 TP today</span>`);
+  if (state.weatherFlags.V) log(`<span class="log-warn">Poor Visibility: encounter distance halved (30ft→15ft / 9m→5m), Lost chance +1-in-6</span>`);
+  if (state.weatherFlags.W) log(`<span class="log-warn">Wet: campfire difficult</span>`);
+
+  updateSidebar();
+}
+
+function recalcTP() {
+  const speed = parseInt(document.getElementById('inp-speed').value) || 40;
+  let tp = Math.floor(speed / 5);
+  if (document.getElementById('chk-forced').checked) tp = Math.floor(tp * 1.5);
+  if (state.weatherFlags.I) tp = Math.max(0, tp - 2);
+  state.tpMax = tp;
+  state.tpLeft = tp;
+}
+
+function resetTP() {
+  recalcTP();
+  log(`<span class="log-info">New day – TP reset to ${state.tpMax}</span>`);
+  updateTPBar();
+  updateSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN TRAVEL PROCEDURE
+// ═══════════════════════════════════════════════════════════════
+function runTravel() {
+  if (!state.currentHex || !state.targetHex) return;
+
+  const ch = state.currentHex;
+  const th = state.targetHex;
+  const hc = HEXES[ch];
+  const ht = HEXES[th] || { t:'Unknown', r:'Unknown', lc:2, ec:2, tp:3, tc:'moderate' };
+  const onRoad = document.getElementById('chk-road').checked;
+  const isForced = document.getElementById('chk-forced').checked;
+  const hasHunter = document.getElementById('chk-hunter').checked;
+  const hasGuide = document.getElementById('chk-guide').checked;
+
+  logBlockOpen();
+  log(`<span class="log-section">══ TRAVEL: ${ch} → ${th} ══</span>`);
+  log(`Terrain: ${ht.t} | Region: ${ht.r} | Road: ${onRoad ? 'Yes' : 'No'}`);
+  if (isForced) log(`<span class="log-warn">FORCED MARCH – party will be exhausted</span>`);
+
+  // ── 1. TP COST ──
+  let tpCost = onRoad ? 2 : ht.tp;
+  if (state.weatherFlags.I) {
+    tpCost += 2;
+    log(`<span class="log-warn">Weather Impeded: +2 TP cost</span>`);
+  }
+  logR('roll', `TP cost: ${tpCost} (${state.tpLeft} remaining)`);
+  if (tpCost > state.tpLeft) {
+    logR('danger', `NOT ENOUGH TP. Need ${tpCost}, have ${state.tpLeft}.`);
+    logBlockClose();
+    return;
+  }
+  state.tpLeft -= tpCost;
+  log(`TP after travel: <strong>${state.tpLeft}</strong>`);
+
+  // ── 2. GETTING LOST ──
+  log(`<span class="log-section">── LOST CHECK ──</span>`);
+  let lostChance = onRoad ? 0 : ht.lc;
+  if (!onRoad && state.weatherFlags.V) {
+    lostChance = Math.min(6, lostChance + 1);
+    log(`<span class="log-warn">Poor visibility: lost chance +1 → ${lostChance}-in-6</span>`);
+  }
+
+  let isLost = false;
+  if (lostChance === 0) {
+    logR('ok', 'Road/track: no lost check needed');
+  } else {
+    const { hit, roll } = rollXd6chance(lostChance);
+    logR('roll', `Lost 1d6 = ${roll} (need ≤${lostChance} to get lost)`);
+    if (hit) {
+      isLost = true;
+      logR('danger', 'PARTY IS LOST');
+
+      // Navigation check
+      if (hasGuide) {
+        const { hit: found, roll: navRoll } = rollXd6chance(4);
+        logR('roll', `Guide navigation 1d6 = ${navRoll} (need ≤4)`);
+        if (found) { isLost = false; logR('ok', 'Guide finds the path – not lost'); }
+        else log(`<span class="log-warn">Guide fails to navigate</span>`);
+      } else if (hasHunter) {
+        const { hit: found, roll: navRoll } = rollXd6chance(3);
+        logR('roll', `Hunter navigation 1d6 = ${navRoll} (need ≤3)`);
+        if (found) { isLost = false; logR('ok', 'Hunter finds the path – not lost'); }
+        else log(`<span class="log-warn">Hunter fails to navigate</span>`);
+      }
+
+      if (isLost) {
+        const { total: lt, rolls: lr } = roll3d6();
+        const consequence = LOST_TABLE[lt] || 'Unknown consequence';
+        logR('roll', `Consequence 3d6 [${lr.join('+')}] = ${lt}`);
+        logR('danger', `→ ${consequence}`);
+      }
+    } else {
+      logR('ok', 'Party stays on course');
+    }
+  }
+
+  // ── 3. ENCOUNTER CHECK ──
+  const timeCtx = state.isNight ? (state.hasFire ? 'night, fire' : 'night, no fire') : (onRoad ? 'day, road' : 'day, wild');
+  log(`<span class="log-section">── ENCOUNTER CHECK (${timeCtx}) ──</span>`);
+  const { hit: encHit, roll: encRoll } = rollXd6chance(ht.ec);
+  logR('roll', `Encounter 1d6 = ${encRoll} (need ≤${ht.ec})`);
+  if (encHit) {
+    const typeRoll = roll1d8();
+    let colIdx, timeLabel;
+    if (!state.isNight) {
+      colIdx    = onRoad ? 0 : 1;
+      timeLabel = onRoad ? 'Road, day' : 'Wild, day';
+    } else {
+      colIdx    = state.hasFire ? 2 : 3;
+      timeLabel = state.hasFire ? 'Night, fire' : 'Night, no fire';
+    }
+    const encTypeRow = ENC_TYPE_TABLE[typeRoll];
+    const encType = encTypeRow ? encTypeRow[colIdx] : 'Regional';
+    logR('danger', `ENCOUNTER! 1d8 = ${typeRoll} → ${encType} (${timeLabel})`);
+
+    // Creature
+    rollCreatureLog(encType, ht.r, 'Creature');
+
+    // Surprise
+    const surpRoll = d(6);
+    logR('roll', `Surprise 1d6 = ${surpRoll} (party surprised on 1-2)`);
+    if (surpRoll <= 2) logR('danger', 'Party is SURPRISED');
+    else logR('ok', 'No surprise');
+
+    // Distance
+    const distD1 = d(6); const distD2 = d(6);
+    const distMult = state.weatherFlags.V ? 15 : 30;
+    const dist = (distD1 + distD2) * distMult;
+    const distM = Math.round(dist * 0.3048);
+    logR('roll', `Distance 2d6×${distMult}ft = ${distD1}+${distD2}=${distD1+distD2} → ${dist}ft (${distM}m)`);
+
+    // Reaction
+    const { total: rt, rolls: rr } = roll2d6();
+    logR('roll', `Reaction 2d6 [${rr.join('+')}] = ${rt} → ${reactionText(rt)}`);
+
+    // Activity
+    const actRoll = roll1d20();
+    const actText = activityText(actRoll);
+    logR('roll', `Activity 1d20 = ${actRoll} → ${actText}`);
+    if (actText.includes('?')) {
+      log(`<span class="log-warn">? — rolling second creature:</span>`);
+      rollCreatureLog(encType, ht.r, 'Second creature');
+    }
+  } else {
+    logR('ok', 'No encounter');
+  }
+
+  // ── 4. MOVE ──
+  if (!isLost) {
+    state.currentHex = th;
+    state.targetHex = null;
+    state.clickPhase = 2;
+    logR('ok', `Party arrives at ${th}`);
+    refreshOverlay();
+  } else {
+    state.targetHex = null;
+    log(`<span class="log-warn">Party position uncertain – update manually</span>`);
+  }
+
+  // ── 5. FORCED MARCH NOTE ──
+  if (isForced) {
+    log(`<span class="log-warn">Exhausted: −1 to Attack and Damage until full rest</span>`);
+  }
+
+  logBlockClose();
+
+  updateSidebar();
+}
+
+// Roll a creature from the appropriate table and log the result.
+// encType: 'Animal'|'Monster'|'Mortal'|'Sentient'|'Regional'
+// region: region string from hex data (used for Regional)
+// label: prefix shown in log ('Creature', 'Second creature', etc.)
+function rollCreatureLog(encType, region, label) {
+  const r = roll1d20();
+  if (encType === 'Regional') {
+    const regionKey = Object.keys(ENC_REGIONAL).find(k => (region || '').includes(k)) || null;
+    if (regionKey) {
+      const creature = ENC_REGIONAL[regionKey][r] || '—';
+      logR('roll', `${label} [Regional: ${regionKey}] 1d20=${r} → ${creature}`);
+    } else {
+      log(`<span class="log-warn">${label} — no regional table for "${region}".</span>`);
+    }
+  } else if (ENC_COMMON[encType]) {
+    const creature = ENC_COMMON[encType][r] || '—';
+    logR('roll', `${label} [${encType}] 1d20=${r} → ${creature}`);
+  } else {
+    log(`<span class="log-warn">${label} — unknown type: ${encType}.</span>`);
+  }
+}
+
+function reactionText(roll) {
+  if (roll <= 2) return 'Hostile – attacks immediately';
+  if (roll <= 5) return 'Unfriendly – may attack';
+  if (roll <= 8) return 'Neutral – wary, uncertain';
+  if (roll <= 11) return 'Indifferent – not interested';
+  return 'Friendly – willing to negotiate';
+}
+
+function activityText(roll) {
+  // Source: Dolmenwood Campaign Book – Creature Activity (d20)
+  const acts = [null,
+    'Celebrating',           // 1
+    'Chasing ? (roll another encounter)',  // 2
+    'Constructing',          // 3
+    'Defecating',            // 4
+    'Dying / wounded',       // 5
+    'Fleeing from ? (roll another encounter)', // 6
+    'Hallucinating',         // 7
+    'Hunting / foraging',    // 8
+    'In combat with ? (roll another encounter)', // 9
+    'Journey / pilgrimage',  // 10
+    'Lost / exploring',      // 11
+    'Marking territory',     // 12
+    'Mating / courting',     // 13
+    'Negotiating with ? (roll another encounter)', // 14
+    'Patrolling / guarding', // 15
+    'Resting / camping',     // 16
+    'Ritual / magic',        // 17
+    'Sleeping',              // 18
+    'Trapped / imprisoned',  // 19
+    'Washing',               // 20
+  ];
+  return acts[roll] || 'Unknown activity';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════════════════
+let _logBlock = null;  // current open travel block
+
+function logBlockOpen() {
+  // Dim ALL existing blocks immediately
+  document.querySelectorAll('.log-block').forEach(b => b.classList.add('log-block-past'));
+  const div = document.getElementById('log');
+  _logBlock = document.createElement('div');
+  _logBlock.className = 'log-block';   // no 'past' — this one is active
+  div.appendChild(_logBlock);
+}
+
+function logBlockClose() {
+  // newest block stays bright until next travel
+  _logBlock = null;
+}
+
+function log(html) {
+  const container = _logBlock || document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = html;
+  container.appendChild(entry);
+  document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
+}
+
+// logR: dim label text, highlighted value after →
+// text before → (if any) is dimmed, the part after → gets the coloured border box.
+// If no → in html, the whole text gets the border.
+function logR(type, html) {
+  let inner;
+  const arrowIdx = html.lastIndexOf('→');
+  if (arrowIdx !== -1) {
+    const label = html.slice(0, arrowIdx + 1);  // includes →
+    const value = html.slice(arrowIdx + 1).trim();
+    inner = `<span class="log-dim">${label}</span> <span class="log-value ${type}">${value}</span>`;
+  } else {
+    inner = `<span class="log-value ${type}">${html}</span>`;
+  }
+  log(inner);
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+  _logBlock = null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAP SWITCHER
+// ═══════════════════════════════════════════════════════════════
+const MAPS = {
+  blank:   '../../Maps/Players/Dolmenwood Blank Hex Map.png',
+  player:  '../../Maps/Players/Dolmenwood Player\'s Map.png',
+  referee: '../../Maps/Referee/Dolmenwood Referee\'s Hex Map.png',
+  vtt:     '../../Maps/Referee/Dolmenwood VTT Hex Map.png',
+  'vtt-s': '../../Maps/Referee/Dolmenwood VTT Hex Map Settlements.png',
+};
+let currentMapKey = 'blank';
+
+function switchMap(key) {
+  if (!MAPS[key]) return;
+  currentMapKey = key;
+  document.getElementById('map-img').src = MAPS[key];
+  document.querySelectorAll('.map-toggle button').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-' + key);
+  if (btn) btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ZOOM
+// ═══════════════════════════════════════════════════════════════
+function applyScale(s) {
+  state.scale = Math.max(0.3, Math.min(3.0, s));
+  document.getElementById('map-wrapper').style.transform = `scale(${state.scale})`;
+  document.getElementById('map-wrapper').style.transformOrigin = 'top left';
+}
+function zoomIn()    { applyScale(state.scale + 0.15); }
+function zoomOut()   { applyScale(state.scale - 0.15); }
+function zoomReset() { fitMap(); }
+
+// ═══════════════════════════════════════════════════════════════
+// CALIBRATION
+// ═══════════════════════════════════════════════════════════════
+function toggleCal() {
+  document.getElementById('cal-panel').classList.toggle('open');
+}
+
+// Sync slider → number field
+function syncNum(rangeId, numberId) {
+  document.getElementById(numberId).value = document.getElementById(rangeId).value;
+}
+// Sync number field → slider
+function syncRange(numberId, rangeId) {
+  document.getElementById(rangeId).value = document.getElementById(numberId).value;
+}
+
+function applyCalibration() {
+  // Always read from the number fields (source of truth)
+  const ox  = +document.getElementById('n-ox').value;
+  const oy  = +document.getElementById('n-oy').value;
+  const r   = +document.getElementById('n-r').value;
+  const cw  = +document.getElementById('n-cw').value;
+  const rh  = +document.getElementById('n-rh').value;
+  const eo  = +document.getElementById('n-eo').value;
+  const rot = +document.getElementById('n-rot').value;
+
+  // Apply to HEX_CONFIG
+  HEX_CONFIG.originX    = ox;
+  HEX_CONFIG.originY    = oy;
+  HEX_CONFIG.hexR       = r;
+  HEX_CONFIG.colW       = cw;
+  HEX_CONFIG.rowH       = rh;
+  HEX_CONFIG.evenOffset = eo;
+  HEX_CONFIG.hexRot     = rot;
+
+  buildOverlay();
+  refreshOverlay();
+
+  // Show current values for copy-paste
+  document.getElementById('cal-output').textContent =
+    `originX: ${ox},\noriginY: ${oy},\nhexR: ${r},\ncolW: ${cw},\nrowH: ${rh},\nevenOffset: ${eo},\nhexRot: ${rot}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAP PAN (drag to scroll)
+// ═══════════════════════════════════════════════════════════════
+(function() {
+  let isPanning = false;
+  let startX, startY, scrollLeft, scrollTop;
+  // drag threshold: if mouse moves more than this many px, treat as pan not click
+  const DRAG_THRESHOLD = 6;
+  let moved = false;
+
+  function onMouseDown(e) {
+    if (e.button !== 0) return;       // left button only
+    const container = document.getElementById('map-container');
+    isPanning  = true;
+    moved      = false;
+    startX     = e.clientX;
+    startY     = e.clientY;
+    scrollLeft = container.scrollLeft;
+    scrollTop  = container.scrollTop;
+    container.classList.add('panning');
+    e.preventDefault();
+  }
+
+  function onMouseMove(e) {
+    if (!isPanning) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) moved = true;
+    if (moved) {
+      const container = document.getElementById('map-container');
+      container.scrollLeft = scrollLeft - dx;
+      container.scrollTop  = scrollTop  - dy;
+    }
+  }
+
+  function onMouseUp(e) {
+    if (!isPanning) return;
+    isPanning = false;
+    document.getElementById('map-container').classList.remove('panning');
+    // If barely moved, let the click on the SVG hex go through normally.
+    // If dragged, suppress the click so hex doesn't get selected.
+    if (moved) {
+      e.stopPropagation();
+      // also swallow the upcoming click event once
+      document.getElementById('map-container').addEventListener('click', absorbClick, { capture: true, once: true });
+    }
+  }
+
+  function absorbClick(e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  window.addEventListener('load', () => {
+    const container = document.getElementById('map-container');
+    container.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup',   onMouseUp);
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// DAY / NIGHT
+// ═══════════════════════════════════════════════════════════════
+function setTimeOfDay(mode) {
+  state.isNight = (mode === 'night');
+  document.getElementById('btn-day').classList.toggle('active', !state.isNight);
+  document.getElementById('btn-night').classList.toggle('active', state.isNight);
+  const fireRow = document.getElementById('fire-row');
+  fireRow.style.display = state.isNight ? 'flex' : 'none';
+  state.hasFire = document.getElementById('chk-fire').checked;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function fitMap() {
+  const container = document.getElementById('map-container');
+  const img = document.getElementById('map-img');
+  const cW = container.clientWidth;
+  const cH = container.clientHeight;
+  const iW = img.naturalWidth;
+  const iH = img.naturalHeight;
+  if (!iW || !iH) return;
+  const scale = Math.min(cW / iW, cH / iH);
+  applyScale(scale);
+}
+
+window.addEventListener('load', () => {
+  const img = document.getElementById('map-img');
+  const doInit = () => {
+    const svg = document.getElementById('hex-svg');
+    svg.style.width = img.naturalWidth + 'px';
+    svg.style.height = img.naturalHeight + 'px';
+    buildOverlay();
+    recalcTP();
+    updateSidebar();
+    fitMap();
+    log('<span class="log-info">Travel Tracker ready. Click the map to set current hex.</span>');
+  };
+  if (img.complete && img.naturalWidth) doInit();
+  else img.addEventListener('load', doInit);
+
+  // Speed / forced march inputs trigger TP recalc
+  document.getElementById('inp-speed').addEventListener('input', () => { recalcTP(); updateSidebar(); });
+  document.getElementById('chk-forced').addEventListener('change', () => { recalcTP(); updateSidebar(); });
+  document.getElementById('chk-road').addEventListener('change', () => updateSidebar());
+  document.getElementById('chk-hunter').addEventListener('change', () => updateSidebar());
+  document.getElementById('chk-guide').addEventListener('change', () => updateSidebar());
+  document.getElementById('chk-fire').addEventListener('change', () => {
+    state.hasFire = document.getElementById('chk-fire').checked;
+  });
+});
+</script>
+</body>
+</html>

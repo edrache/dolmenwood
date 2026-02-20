@@ -1,0 +1,33 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Temporary files
+.tmp/
+
+# Maps (large binary files)
+Maps/
+
+# PDFs (copyright)
+PDF/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# Skills - only skills-custom is tracked
+skills/skills-anthrophics/
+skills/skills-openai/
+
+# Node / build artifacts
+node_modules/
+dist/
+*.log
