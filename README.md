@@ -53,6 +53,25 @@ A self-contained HTML/JS app for running the **Dolmenwood overland travel proced
 - Travel Point (TP) tracking per OSE/Dolmenwood rules
 - Works offline in any browser — no server required
 
+#### `tools/calendar/`
+
+A two-page web app for tracking the **Dolmenwood in-world calendar**:
+
+- **`index.html`** – Player-facing view (folk/illuminated-manuscript aesthetic):
+  - Current day displayed prominently with season, moon phase, feast days
+  - Full month calendar grid with all 12 months, Wysendays, and saint's feasts
+  - "Forthcoming Days of Note" panel (next 8 moon phases, feasts, special days)
+  - Auto-refreshes every 10s to reflect Referee changes
+- **`referee.html`** – Referee's private panel:
+  - Advance/retreat days or set date manually; set year label
+  - Weather rolling (2d6 × season table) with I/V/W flags; custom weather override
+  - Season override including Hitching and Vague unseason variants
+  - Random encounter roller: check (1d6), type, creature, surprise, distance, reaction, activity
+  - Quick dice (d4–d100, 2d6)
+  - Public note field (shown on player view)
+  - Session log with timestamps
+- State shared via `localStorage` — deploy on a shared server for live-session use
+
 ---
 
 ### `campaign/dolmenwood/` – Campaign Vault (Obsidian-compatible)

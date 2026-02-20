@@ -1,0 +1,621 @@
+/* ============================================================
+   Dolmenwood Calendar – Folk/Medieval Stylesheet
+   Inspired by illuminated manuscripts, woodblock prints
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+  --parchment:      #f4ead5;
+  --parchment-dark: #e8d9b8;
+  --parchment-deep: #d9c89a;
+  --ink:            #1e1208;
+  --ink-faded:      #4a3520;
+  --crimson:        #8b1a1a;
+  --crimson-bright: #c0392b;
+  --gold:           #9a7c2e;
+  --gold-light:     #c8a84b;
+  --forest:         #2d4a2a;
+  --winter-blue:    #2a3a5c;
+  --autumn-red:     #6b2a10;
+  --border-thin:    1px solid #9a7c2e;
+  --border-med:     2px solid #9a7c2e;
+  --border-thick:   3px solid #6b2a10;
+  --radius:         4px;
+  --shadow:         2px 3px 8px rgba(30,18,8,0.25);
+  --shadow-deep:    4px 6px 16px rgba(30,18,8,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+  background-color: #2a1e0e;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(100,70,20,0.04) 40px,
+      rgba(100,70,20,0.04) 80px
+    );
+  font-family: 'Crimson Text', Georgia, serif;
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ---- Page wrapper ---- */
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+/* ---- Header ---- */
+.site-header {
+  text-align: center;
+  padding: 1.5rem 1rem 1rem;
+  border-bottom: var(--border-thick);
+  margin-bottom: 1.5rem;
+  background: var(--parchment);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.site-header::before,
+.site-header::after {
+  content: '✦';
+  position: absolute;
+  top: 1.2rem;
+  color: var(--gold);
+  font-size: 1.4rem;
+}
+.site-header::before { left: 1.2rem; }
+.site-header::after  { right: 1.2rem; }
+
+.site-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  color: var(--crimson);
+  text-shadow: 1px 2px 0 rgba(0,0,0,0.15);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+}
+
+.site-subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(0.7rem, 1.5vw, 0.95rem);
+  color: var(--ink-faded);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+/* ---- Current date banner ---- */
+.date-banner {
+  background: var(--parchment);
+  border: var(--border-thick);
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.date-banner::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.date-day-name {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  color: var(--crimson);
+  font-weight: 700;
+}
+
+.date-full {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  color: var(--ink-faded);
+  font-style: italic;
+  margin-top: 0.2rem;
+}
+
+.date-season {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-top: 0.4rem;
+}
+
+.date-feast {
+  font-size: 0.95rem;
+  color: var(--crimson);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.date-moon {
+  font-size: 1.2rem;
+  margin-top: 0.3rem;
+}
+
+.date-weather {
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(154,124,46,0.1);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  display: inline-block;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+/* ---- Weather flags ---- */
+.flag {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+}
+.flag-I { background: #5a1010; color: #ff9090; }
+.flag-V { background: #1a2050; color: #9090ff; }
+.flag-W { background: #0e2a3a; color: #60c0d0; }
+
+/* ---- Calendar grid ---- */
+.calendar-wrapper {
+  background: var(--parchment);
+  border: var(--border-thick);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-deep);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.month-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+  color: var(--crimson);
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.month-subtitle {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ink-faded);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: 'Cinzel', serif;
+  margin-top: 0.2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: var(--border-med);
+}
+
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: var(--border-thin);
+  color: var(--ink-faded);
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.15s, color 0.15s;
+}
+.cal-nav-btn:hover {
+  background: var(--parchment-dark);
+  color: var(--crimson);
+}
+
+.weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.weekday-label {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  color: var(--ink-faded);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0;
+}
+
+.cal-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.cal-cell {
+  background: var(--parchment-dark);
+  border: 1px solid var(--parchment-deep);
+  border-radius: 2px;
+  padding: 0.35rem 0.4rem;
+  min-height: 64px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 0.78rem;
+}
+
+.cal-cell:hover {
+  background: #ede0c0;
+  border-color: var(--gold);
+}
+
+.cal-cell.today {
+  background: #fdf0d0;
+  border: 2px solid var(--crimson);
+  box-shadow: inset 0 0 0 1px var(--gold-light);
+}
+
+.cal-cell.today .cell-day-num {
+  color: var(--crimson);
+  font-weight: 700;
+}
+
+.cell-day-num {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.cell-day-name {
+  font-size: 0.62rem;
+  color: var(--ink-faded);
+  display: block;
+}
+
+.cell-feast {
+  font-size: 0.58rem;
+  color: var(--crimson);
+  font-style: italic;
+  margin-top: 0.2rem;
+  line-height: 1.3;
+  display: block;
+}
+
+.cell-moon {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+/* Wysendays row */
+.cal-wysendays {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.cal-cell-wysen {
+  background: #dfd0b0;
+  border: 1px solid var(--parchment-deep);
+  border-radius: 2px;
+  padding: 0.35rem 0.5rem;
+  min-height: 64px;
+  width: calc(100% / 7 * 1 - 2px);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.cal-cell-wysen:hover { background: #cfc0a0; }
+.cal-cell-wysen.today {
+  background: #fdf0d0;
+  border: 2px solid var(--crimson);
+}
+
+.wysen-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.cal-notes-row {
+  font-size: 0.65rem;
+  color: var(--ink-faded);
+  font-style: italic;
+  margin-top: 0.6rem;
+  text-align: right;
+  border-top: 1px dashed var(--parchment-deep);
+  padding-top: 0.4rem;
+}
+
+/* ---- Seasonal colour strips ---- */
+.season-winter .month-title { color: #3a5080; }
+.season-spring .month-title { color: #2d6030; }
+.season-summer .month-title { color: #7a5010; }
+.season-autumn .month-title { color: #7a2510; }
+
+/* ---- Public note block ---- */
+.public-note {
+  background: var(--parchment);
+  border-left: 4px solid var(--gold);
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  font-style: italic;
+  color: var(--ink-faded);
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.public-note strong {
+  font-family: 'Cinzel', serif;
+  font-style: normal;
+  color: var(--crimson);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+/* ---- Decorative divider ---- */
+.divider {
+  text-align: center;
+  color: var(--gold);
+  font-size: 1.2rem;
+  letter-spacing: 0.5rem;
+  margin: 1rem 0;
+  user-select: none;
+}
+
+/* ---- Referee panel ---- */
+.ref-panel {
+  background: #1a1208;
+  border: 2px solid #4a3010;
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  color: #d4c49a;
+  font-family: 'Crimson Text', serif;
+}
+
+.ref-panel h2 {
+  font-family: 'Cinzel', serif;
+  color: #c9a84c;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-bottom: 1px solid #4a3010;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.ref-section {
+  margin-bottom: 1.2rem;
+}
+
+.ref-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: #8a7a55;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ---- Roll button ---- */
+.roll-btn {
+  background: linear-gradient(to bottom, #8b1a1a, #6b0e0e);
+  border: 1px solid #c03030;
+  color: #f4ead5;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  padding: 0.45rem 1rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.roll-btn:hover {
+  background: linear-gradient(to bottom, #a02020, #7a1010);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+}
+.roll-btn:active { transform: translateY(1px); }
+
+.roll-btn-secondary {
+  background: linear-gradient(to bottom, #2a3a5c, #1a2a4c);
+  border-color: #4a6aac;
+}
+.roll-btn-secondary:hover {
+  background: linear-gradient(to bottom, #3a4a6c, #2a3a5c);
+}
+
+/* ---- Result box ---- */
+.result-box {
+  background: #110d06;
+  border: 1px solid #4a3010;
+  border-radius: 3px;
+  padding: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  min-height: 3rem;
+  color: #d4c49a;
+}
+
+.result-box .roll-num {
+  color: #c9a84c;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+}
+.result-box .roll-result {
+  color: #e8e0c0;
+  font-weight: 600;
+}
+.result-box .roll-bad  { color: #ff8080; }
+.result-box .roll-good { color: #80d080; }
+.result-box .roll-warn { color: #f0c060; }
+.result-box .roll-note { color: #8090a0; font-style: italic; }
+
+/* ---- Select / input ---- */
+.ref-select, .ref-input {
+  background: #2a1e0e;
+  border: 1px solid #4a3010;
+  color: #d4c49a;
+  font-family: 'Crimson Text', serif;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 3px;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.ref-select:focus, .ref-input:focus {
+  outline: 1px solid #c9a84c;
+  border-color: #c9a84c;
+}
+
+/* ---- Checkbox row ---- */
+.check-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.check-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+/* ---- Day advance controls ---- */
+.day-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem;
+}
+
+.day-btn {
+  background: linear-gradient(to bottom, #3a2a0e, #2a1a08);
+  border: 1px solid #6a5020;
+  color: #d4c49a;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.day-btn:hover { background: linear-gradient(to bottom, #4a3a1e, #3a2a10); }
+
+/* ---- Nav links between pages ---- */
+.page-nav {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.page-nav a {
+  display: inline-block;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c9a84c;
+  text-decoration: none;
+  border: 1px solid #4a3010;
+  padding: 0.4rem 1rem;
+  border-radius: 3px;
+  background: #1a1208;
+  transition: background 0.15s, color 0.15s;
+}
+
+.page-nav a:hover {
+  background: #2a2010;
+  color: #e8c86a;
+}
+
+/* ---- Log entries ---- */
+.log-entry {
+  border-bottom: 1px solid #2a2010;
+  padding: 0.5rem 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.log-entry:last-child { border-bottom: none; }
+
+.log-time {
+  font-size: 0.65rem;
+  color: #5a4a25;
+  font-family: 'Cinzel', serif;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 700px) {
+  .cal-cell { min-height: 48px; padding: 0.25rem; }
+  .cell-day-num { font-size: 0.7rem; }
+  .cell-feast { display: none; }
+  .cell-day-name { display: none; }
+}
+
+@media (max-width: 500px) {
+  .cal-cell { min-height: 36px; }
+  .cell-day-num { font-size: 0.65rem; }
+}
+
+/* ---- Illuminated drop cap ---- */
+.drop-cap::first-letter {
+  font-family: 'Cinzel', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--crimson);
+  float: left;
+  line-height: 0.8;
+  margin-right: 0.15rem;
+  margin-top: 0.1rem;
+}
+
+/* ---- Moon symbols ---- */
+.moon-new  { color: #1a1a3a; }
+.moon-full { color: #c9a84c; }

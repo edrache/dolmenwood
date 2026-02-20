@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dolmenwood – Referee's Chamber</title>
+  <link rel="stylesheet" href="css/folk.css">
+  <style>
+    body { background-color: #120e06; }
+
+    .ref-header {
+      text-align: center;
+      padding: 1.2rem 1rem 0.8rem;
+      border-bottom: 2px solid #4a3010;
+      margin-bottom: 1.2rem;
+    }
+    .ref-header .site-title { color: #c9a84c; text-shadow: 0 0 20px rgba(200,160,60,0.3); }
+    .ref-header .site-subtitle { color: #6a5a35; }
+
+    /* Two-column layout: left=controls, right=log */
+    .ref-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (max-width: 800px) {
+      .ref-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Day control card */
+    .card {
+      background: #1a1208;
+      border: 1px solid #4a3010;
+      border-radius: 4px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      color: #c9a84c;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      border-bottom: 1px solid #4a3010;
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.8rem;
+    }
+
+    /* Today display in ref view */
+    .ref-today {
+      background: #0e0a04;
+      border: 1px solid #6a5020;
+      border-radius: 3px;
+      padding: 0.8rem 1rem;
+      text-align: center;
+      margin-bottom: 0.8rem;
+    }
+    .ref-today-main {
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      color: #e8d49a;
+    }
+    .ref-today-sub {
+      font-size: 0.85rem;
+      color: #8a7a55;
+      margin-top: 0.2rem;
+    }
+    .ref-today-moon {
+      font-size: 1.1rem;
+      margin-top: 0.3rem;
+    }
+    .ref-today-feast {
+      font-size: 0.8rem;
+      color: #c9a84c;
+      font-style: italic;
+      margin-top: 0.2rem;
+    }
+
+    /* Day control buttons */
+    .day-ctrl {
+      display: flex;
+      gap: 0.4rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+
+    .d-btn {
+      background: #2a1e0e;
+      border: 1px solid #6a5020;
+      color: #d4c49a;
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.15s;
+      letter-spacing: 0.05em;
+    }
+    .d-btn:hover { background: #3a2e1e; color: #e8d49a; }
+    .d-btn.danger { border-color: #8b1a1a; color: #ff9090; }
+    .d-btn.danger:hover { background: #2a0e0e; }
+
+    /* Manual date picker */
+    .date-picker {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .date-picker select, .date-picker input {
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      color: #d4c49a;
+      font-family: 'Crimson Text', serif;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.4rem;
+      border-radius: 3px;
+    }
+    .date-picker select:focus, .date-picker input:focus {
+      outline: 1px solid #c9a84c;
+    }
+
+    /* Weather section */
+    .weather-result {
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      border-radius: 3px;
+      padding: 0.7rem 0.8rem;
+      min-height: 2.5rem;
+      font-size: 0.9rem;
+      color: #d4c49a;
+      margin-top: 0.5rem;
+      line-height: 1.6;
+    }
+    .w-dice { color: #c9a84c; font-family: 'Cinzel', serif; font-size: 0.8rem; }
+    .w-result { color: #e8e0c0; font-weight: 600; font-size: 1rem; }
+    .w-impeded { color: #ff8080; }
+    .w-vis    { color: #8080ff; }
+    .w-wet    { color: #60c0d0; }
+
+    /* Set weather controls */
+    .weather-set {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .weather-set input {
+      flex: 1;
+      min-width: 100px;
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      color: #d4c49a;
+      font-family: 'Crimson Text', serif;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 3px;
+    }
+    .weather-set input:focus { outline: 1px solid #c9a84c; }
+
+    /* Encounter result */
+    .enc-result {
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      border-radius: 3px;
+      padding: 0.8rem;
+      font-size: 0.88rem;
+      color: #d4c49a;
+      line-height: 1.8;
+      margin-top: 0.5rem;
+    }
+    .enc-creature { font-size: 1.1rem; color: #e8d49a; font-family: 'Cinzel', serif; }
+    .enc-type    { color: #c9a84c; font-size: 0.75rem; font-family: 'Cinzel', serif; }
+    .enc-row     { border-bottom: 1px solid #2a2010; padding: 0.25rem 0; display: flex; gap: 0.5rem; }
+    .enc-row:last-child { border-bottom: none; }
+    .enc-lbl     { color: #6a5a35; font-size: 0.75rem; min-width: 90px; }
+    .enc-val     { color: #d4c49a; }
+    .enc-bad     { color: #ff8080; }
+    .enc-good    { color: #80d080; }
+    .enc-neutral { color: #e8c060; }
+
+    /* Public note */
+    .pub-note-row {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .pub-note-row input {
+      flex: 1;
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      color: #d4c49a;
+      font-family: 'Crimson Text', serif;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 3px;
+    }
+    .pub-note-row input:focus { outline: 1px solid #c9a84c; }
+
+    /* Session log */
+    .log-panel {
+      background: #0e0a04;
+      border: 1px solid #2a2010;
+      border-radius: 4px;
+      height: calc(100vh - 160px);
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 1rem;
+    }
+    .log-header {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      color: #6a5a35;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid #2a2010;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .log-clear-btn {
+      background: none;
+      border: 1px solid #4a3010;
+      color: #5a4a25;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .log-clear-btn:hover { color: #ff9090; border-color: #8b1a1a; }
+    .log-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.83rem;
+      color: #8a7a55;
+      scrollbar-width: thin;
+      scrollbar-color: #3a2010 #0e0a04;
+    }
+    .log-entry {
+      border-bottom: 1px solid #1a1408;
+      padding: 0.4rem 0;
+      line-height: 1.5;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-ts {
+      font-size: 0.62rem;
+      color: #3a2a10;
+      font-family: 'Cinzel', serif;
+      display: block;
+      margin-bottom: 0.1rem;
+    }
+    .log-title { color: #c9a84c; font-family: 'Cinzel', serif; font-size: 0.75rem; }
+    .log-body-text { color: #a09070; }
+
+    /* Season selector row */
+    .season-row {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .season-badge {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      border: 1px solid #4a3010;
+      color: #8a7a55;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .season-badge:hover { border-color: #c9a84c; color: #c9a84c; }
+    .season-badge.active-winter { background: #1a2040; border-color: #4a6aac; color: #a0b0e0; }
+    .season-badge.active-spring { background: #102010; border-color: #4a8a4a; color: #80c080; }
+    .season-badge.active-summer { background: #201a00; border-color: #8a7a20; color: #d0c060; }
+    .season-badge.active-autumn { background: #201008; border-color: #8a4020; color: #d08050; }
+
+    /* Year label editor */
+    .year-edit-row {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-top: 0.4rem;
+    }
+    .year-edit-row input {
+      flex: 1;
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      color: #d4c49a;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 3px;
+    }
+    .year-edit-row input:focus { outline: 1px solid #c9a84c; }
+
+    .small-btn {
+      background: #2a1e0e;
+      border: 1px solid #6a5020;
+      color: #a09070;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .small-btn:hover { color: #d4c49a; border-color: #c9a84c; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="ref-header">
+    <div class="site-title" style="font-family:'Cinzel',serif;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:700;">
+      Referee's Chamber
+    </div>
+    <div class="site-subtitle" style="font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.2em;color:#6a5a35;text-transform:uppercase;">
+      Dolmenwood · Campaign Calendar
+    </div>
+  </header>
+
+  <div class="ref-layout">
+
+    <!-- LEFT COLUMN: Controls -->
+    <div>
+
+      <!-- TODAY CARD -->
+      <div class="card">
+        <h2>⬡ Current Day</h2>
+
+        <div class="ref-today" id="ref-today">
+          <!-- rendered by JS -->
+        </div>
+
+        <div class="day-ctrl">
+          <button class="d-btn" onclick="doRetreatDay()">◂ Previous Day</button>
+          <button class="d-btn" onclick="doAdvanceDay()">Next Day ▸</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #2a2010;margin:0.5rem 0;">
+
+        <!-- Manual date set -->
+        <div style="font-family:'Cinzel',serif;font-size:0.65rem;color:#6a5a35;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;">Set Date Manually</div>
+        <div class="date-picker">
+          <select id="pick-month" onchange="updatePickDay()">
+            <!-- filled by JS -->
+          </select>
+          <input id="pick-day" type="number" min="1" max="31" value="1" style="width:60px;">
+          <input id="pick-year" type="number" min="1" max="999" value="1" style="width:60px;">
+          <button class="small-btn" onclick="applyDatePick()">Set</button>
+        </div>
+
+        <!-- Year label -->
+        <div class="year-edit-row">
+          <input id="year-label-input" type="text" placeholder="Year label (e.g. Year of the Thornwood)">
+          <button class="small-btn" onclick="applyYearLabel()">Set</button>
+        </div>
+      </div>
+
+      <!-- WEATHER CARD -->
+      <div class="card">
+        <h2>☁ Weather</h2>
+
+        <div style="font-family:'Cinzel',serif;font-size:0.65rem;color:#6a5a35;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;">Season Override</div>
+        <div class="season-row" id="season-badges">
+          <!-- filled by JS -->
+        </div>
+
+        <button class="roll-btn" onclick="doRollWeather()" style="width:100%;margin-bottom:0.4rem;">⚄ Roll Weather (2d6)</button>
+
+        <div class="weather-result" id="weather-result">
+          <span style="color:#3a2a10;font-style:italic;">No roll yet.</span>
+        </div>
+
+        <div style="font-family:'Cinzel',serif;font-size:0.65rem;color:#6a5a35;letter-spacing:0.12em;text-transform:uppercase;margin-top:0.8rem;margin-bottom:0.3rem;">Set Custom Weather (visible to players)</div>
+        <div class="weather-set">
+          <input type="text" id="custom-weather" placeholder="e.g. Heavy fog, cold…">
+          <label style="color:#8a7a55;font-size:0.8rem;display:flex;align-items:center;gap:0.2rem;">
+            <input type="checkbox" id="flag-I"> <span class="flag flag-I">I</span>
+          </label>
+          <label style="color:#8a7a55;font-size:0.8rem;display:flex;align-items:center;gap:0.2rem;">
+            <input type="checkbox" id="flag-V"> <span class="flag flag-V">V</span>
+          </label>
+          <label style="color:#8a7a55;font-size:0.8rem;display:flex;align-items:center;gap:0.2rem;">
+            <input type="checkbox" id="flag-W"> <span class="flag flag-W">W</span>
+          </label>
+          <button class="small-btn" onclick="applyCustomWeather()">Set</button>
+          <button class="small-btn" onclick="clearWeather()">Clear</button>
+        </div>
+      </div>
+
+      <!-- ENCOUNTER CARD -->
+      <div class="card">
+        <h2>⚔ Random Encounter</h2>
+
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+          <div style="flex:1;min-width:100px;">
+            <div class="ref-label" style="color:#6a5a35;">Context</div>
+            <select class="ref-select" id="enc-context">
+              <option value="wild">Wilderness – Day</option>
+              <option value="road">Road / Track – Day</option>
+              <option value="night_fire">Night – With Fire</option>
+              <option value="night_no_fire">Night – No Fire</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:100px;">
+            <div class="ref-label" style="color:#6a5a35;">Region</div>
+            <select class="ref-select" id="enc-region">
+              <option value="Aldweald">Aldweald</option>
+              <option value="Brackenwold">Brackenwold</option>
+              <option value="Wychwood">Wychwood</option>
+              <option value="Nagwood">Nagwood</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="roll-btn" onclick="doRollEncounter()" style="width:100%;margin-bottom:0.4rem;">⚄ Roll Encounter</button>
+        <button class="roll-btn roll-btn-secondary" onclick="doCheckEncounter()" style="width:100%;margin-bottom:0.4rem;font-size:0.72rem;">Check Encounter (1d6 ≤ 2)</button>
+
+        <div class="enc-result" id="enc-result">
+          <span style="color:#3a2a10;font-style:italic;">No roll yet.</span>
+        </div>
+      </div>
+
+      <!-- DICE CARD -->
+      <div class="card">
+        <h2>⚄ Quick Dice</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+          <button class="d-btn" onclick="quickRoll(4)">d4</button>
+          <button class="d-btn" onclick="quickRoll(6)">d6</button>
+          <button class="d-btn" onclick="quickRoll(8)">d8</button>
+          <button class="d-btn" onclick="quickRoll(10)">d10</button>
+          <button class="d-btn" onclick="quickRoll(12)">d12</button>
+          <button class="d-btn" onclick="quickRoll(20)">d20</button>
+          <button class="d-btn" onclick="quickRoll(100)">d100</button>
+          <button class="d-btn" onclick="quick2d6()">2d6</button>
+        </div>
+        <div class="weather-result" id="dice-result" style="margin-top:0.5rem;min-height:2rem;">
+          <span style="color:#3a2a10;font-style:italic;">—</span>
+        </div>
+      </div>
+
+      <!-- PUBLIC NOTE CARD -->
+      <div class="card">
+        <h2>📜 Public Note (shown to players)</h2>
+        <div class="pub-note-row">
+          <input type="text" id="public-note-input" placeholder="e.g. The village gates are closed tonight.">
+          <button class="small-btn" onclick="applyPublicNote()">Set</button>
+          <button class="small-btn" onclick="clearPublicNote()">Clear</button>
+        </div>
+        <div style="font-size:0.75rem;color:#4a3a20;margin-top:0.4rem;font-style:italic;" id="pub-note-preview"></div>
+      </div>
+
+    </div><!-- end left column -->
+
+    <!-- RIGHT COLUMN: Session Log -->
+    <div class="log-panel">
+      <div class="log-header">
+        <span>Session Log</span>
+        <button class="log-clear-btn" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-body" id="log-body">
+        <div style="color:#3a2a10;font-style:italic;font-size:0.8rem;padding:0.5rem 0;">Log begins here…</div>
+      </div>
+    </div>
+
+  </div><!-- end ref-layout -->
+
+  <div style="margin-top:1rem;">
+    <div class="divider" style="color:#4a3010;">✦ ✦ ✦</div>
+    <div class="page-nav">
+      <a href="index.html">☽ Player Calendar View</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/calendar-data.js"></script>
+<script src="js/calendar-state.js"></script>
+<script src="js/weather-data.js"></script>
+<script src="js/encounters-data.js"></script>
+<script>
+// ============================================================
+// Referee View – referee.html
+// ============================================================
+
+let state = loadState();
+let weatherSeasonOverride = null; // null = use current month's season
+
+// ---- Ordinal ----
+function ordinal(n) {
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+// ---- Moon symbol ----
+function moonSym(phase) {
+  if (phase === 'new')  return '🌑 New Moon';
+  if (phase === 'full') return '🌕 Full Moon';
+  return '';
+}
+
+// ---- Log ----
+const LOG_KEY = 'dolmenwood_ref_log';
+let logEntries = [];
+
+function loadLog() {
+  try {
+    const raw = localStorage.getItem(LOG_KEY);
+    if (raw) logEntries = JSON.parse(raw);
+  } catch(e) {}
+}
+
+function saveLog() {
+  try { localStorage.setItem(LOG_KEY, JSON.stringify(logEntries.slice(-200))); } catch(e) {}
+}
+
+function addLog(title, body) {
+  const now = new Date();
+  const ts = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const dayInfo = getDayInfo(state.month, state.day);
+  const dateStr = ordinal(state.day) + ' ' + dayInfo.month.name;
+  logEntries.push({ ts, dateStr, title, body });
+  saveLog();
+  renderLog();
+}
+
+function renderLog() {
+  const logBody = document.getElementById('log-body');
+  if (logEntries.length === 0) {
+    logBody.innerHTML = '<div style="color:#3a2a10;font-style:italic;font-size:0.8rem;padding:0.5rem 0;">Log begins here…</div>';
+    return;
+  }
+  logBody.innerHTML = logEntries.slice().reverse().map(e =>
+    `<div class="log-entry">
+      <span class="log-ts">${e.ts} · ${e.dateStr}</span>
+      <span class="log-title">${e.title}</span><br>
+      <span class="log-body-text">${e.body}</span>
+    </div>`
+  ).join('');
+}
+
+function clearLog() {
+  if (confirm('Clear the session log?')) {
+    logEntries = [];
+    saveLog();
+    renderLog();
+  }
+}
+
+// ---- Render today (ref panel) ----
+function renderRefToday() {
+  const info = getDayInfo(state.month, state.day);
+  const m = info.month;
+  let dayStr;
+  if (info.isWysenday && info.wysenday) {
+    dayStr = info.wysenday.name;
+  } else {
+    dayStr = ordinal(state.day) + ' ' + info.weekday;
+  }
+
+  const moonPhase = (MOON_PHASES[state.month] || {})[state.day] || null;
+  const feast = m.feasts[state.day] || null;
+
+  let html = `<div class="ref-today-main">${dayStr}</div>`;
+  html += `<div class="ref-today-sub">${m.name} · ${m.subtitle} · Year ${state.year || 1}</div>`;
+  if (state.yearLabel) html += `<div style="font-size:0.7rem;color:#6a5a35;margin-top:0.1rem;">${state.yearLabel}</div>`;
+  if (moonPhase) html += `<div class="ref-today-moon">${moonSym(moonPhase)}</div>`;
+  if (feast) html += `<div class="ref-today-feast">${feast}</div>`;
+
+  // Current weather if set
+  if (state.weatherText) {
+    let flagsHtml = '';
+    if (state.weatherFlags.I) flagsHtml += '<span class="flag flag-I" style="margin-left:0.3rem;">I</span>';
+    if (state.weatherFlags.V) flagsHtml += '<span class="flag flag-V" style="margin-left:0.3rem;">V</span>';
+    if (state.weatherFlags.W) flagsHtml += '<span class="flag flag-W" style="margin-left:0.3rem;">W</span>';
+    html += `<div style="margin-top:0.4rem;font-size:0.82rem;color:#c9a84c;">☁ ${state.weatherText}${flagsHtml}</div>`;
+  }
+
+  document.getElementById('ref-today').innerHTML = html;
+
+  // Sync inputs
+  document.getElementById('pick-month').value = state.month;
+  document.getElementById('pick-day').value = state.day;
+  document.getElementById('pick-year').value = state.year || 1;
+  if (state.yearLabel) document.getElementById('year-label-input').value = state.yearLabel;
+  if (state.publicNote) {
+    document.getElementById('public-note-input').value = state.publicNote;
+    document.getElementById('pub-note-preview').textContent = '📜 ' + state.publicNote;
+  }
+
+  // Custom weather input sync
+  if (state.weatherText) {
+    document.getElementById('custom-weather').value = state.weatherText;
+    document.getElementById('flag-I').checked = state.weatherFlags.I;
+    document.getElementById('flag-V').checked = state.weatherFlags.V;
+    document.getElementById('flag-W').checked = state.weatherFlags.W;
+  }
+
+  // Season badges
+  updateSeasonBadges();
+}
+
+// ---- Season badges ----
+function updateSeasonBadges() {
+  const seasons = ['winter','spring','summer','autumn','hitching','vague'];
+  const labels = ['Winter','Spring','Summer','Autumn','Hitching','Vague'];
+  const currentSeason = weatherSeasonOverride || MONTHS[state.month - 1].season;
+
+  const container = document.getElementById('season-badges');
+  container.innerHTML = seasons.map((s, i) =>
+    `<button class="season-badge${currentSeason === s ? ' active-' + (s === 'hitching' || s === 'vague' ? 'autumn' : s) : ''}"
+      onclick="setSeasonOverride('${s}')">${labels[i]}</button>`
+  ).join('');
+}
+
+function setSeasonOverride(s) {
+  weatherSeasonOverride = s;
+  updateSeasonBadges();
+}
+
+// ---- Day navigation ----
+function doAdvanceDay() {
+  const prev = getDayInfo(state.month, state.day);
+  state = advanceDay(state);
+  saveState(state);
+  renderRefToday();
+  addLog('Day Advanced', ordinal(state.day) + ' ' + MONTHS[state.month-1].name);
+}
+
+function doRetreatDay() {
+  state = retreatDay(state);
+  saveState(state);
+  renderRefToday();
+  addLog('Day Retreated', ordinal(state.day) + ' ' + MONTHS[state.month-1].name);
+}
+
+// ---- Month picker population ----
+function populateMonthPicker() {
+  const sel = document.getElementById('pick-month');
+  sel.innerHTML = MONTHS.map(m =>
+    `<option value="${m.num}">${m.num}. ${m.name}</option>`
+  ).join('');
+  sel.value = state.month;
+}
+
+function updatePickDay() {
+  const m = parseInt(document.getElementById('pick-month').value);
+  const maxDay = getMonthLength(m);
+  const dayInput = document.getElementById('pick-day');
+  dayInput.max = maxDay;
+  if (parseInt(dayInput.value) > maxDay) dayInput.value = maxDay;
+}
+
+function applyDatePick() {
+  const m = parseInt(document.getElementById('pick-month').value);
+  const d = Math.max(1, Math.min(parseInt(document.getElementById('pick-day').value), getMonthLength(m)));
+  const y = Math.max(1, parseInt(document.getElementById('pick-year').value) || 1);
+  state.month = m;
+  state.day = d;
+  state.year = y;
+  state.weatherText = '';
+  state.weatherFlags = { I: false, V: false, W: false };
+  saveState(state);
+  renderRefToday();
+  addLog('Date Set', ordinal(d) + ' ' + MONTHS[m-1].name + ', Year ' + y);
+}
+
+function applyYearLabel() {
+  state.yearLabel = document.getElementById('year-label-input').value.trim();
+  saveState(state);
+  renderRefToday();
+}
+
+// ---- Weather rolling ----
+function doRollWeather() {
+  const season = weatherSeasonOverride || MONTHS[state.month - 1].season;
+  const result = rollWeather(season);
+
+  let flagsHtml = '';
+  if (result.I) flagsHtml += ' <span class="flag flag-I">Impeded</span>';
+  if (result.V) flagsHtml += ' <span class="flag flag-V">Visibility</span>';
+  if (result.W) flagsHtml += ' <span class="flag flag-W">Wet</span>';
+
+  const html = `
+    <div><span class="w-dice">2d6 [${result.d1}+${result.d2}] = ${result.total}</span></div>
+    <div class="w-result">${result.text}</div>
+    ${result.I ? '<div class="w-impeded">⚠ Impeded: −2 Travel Points today</div>' : ''}
+    ${result.V ? '<div class="w-vis">👁 Visibility halved · Lost chance +1-in-6</div>' : ''}
+    ${result.W ? '<div class="w-wet">💧 Wet: campfire difficult</div>' : ''}
+  `;
+  document.getElementById('weather-result').innerHTML = html;
+
+  // Prompt to set as today's weather
+  const setBtn = document.createElement('button');
+  setBtn.className = 'small-btn';
+  setBtn.style.marginTop = '0.4rem';
+  setBtn.textContent = '→ Set as Today\'s Weather';
+  setBtn.onclick = () => {
+    state.weatherText = result.text;
+    state.weatherFlags = { I: result.I, V: result.V, W: result.W };
+    saveState(state);
+    renderRefToday();
+    addLog('Weather Set', result.text + (result.I?' [I]':'') + (result.V?' [V]':'') + (result.W?' [W]':''));
+    document.getElementById('weather-result').querySelector('button')?.remove();
+  };
+  document.getElementById('weather-result').appendChild(setBtn);
+
+  addLog('Weather Roll', `2d6 [${result.d1}+${result.d2}]=${result.total} → ${result.text} (${season})`);
+}
+
+function applyCustomWeather() {
+  const text = document.getElementById('custom-weather').value.trim();
+  if (!text) return;
+  state.weatherText = text;
+  state.weatherFlags = {
+    I: document.getElementById('flag-I').checked,
+    V: document.getElementById('flag-V').checked,
+    W: document.getElementById('flag-W').checked,
+  };
+  saveState(state);
+  renderRefToday();
+  addLog('Weather Set (Custom)', text);
+}
+
+function clearWeather() {
+  state.weatherText = '';
+  state.weatherFlags = { I: false, V: false, W: false };
+  document.getElementById('custom-weather').value = '';
+  document.getElementById('flag-I').checked = false;
+  document.getElementById('flag-V').checked = false;
+  document.getElementById('flag-W').checked = false;
+  saveState(state);
+  renderRefToday();
+  addLog('Weather Cleared', '—');
+}
+
+// ---- Encounter rolling ----
+function doCheckEncounter() {
+  const roll = Math.ceil(Math.random() * 6);
+  const hit = roll <= 2;
+  const resultDiv = document.getElementById('enc-result');
+
+  let html = `<div><span class="w-dice">Encounter Check: 1d6 = ${roll} (need ≤ 2)</span></div>`;
+  if (hit) {
+    html += `<div class="enc-creature" style="color:#ff9090;">⚠ Encounter!</div>`;
+  } else {
+    html += `<div style="color:#80d080;">✓ No encounter.</div>`;
+  }
+  resultDiv.innerHTML = html;
+  addLog('Encounter Check', `1d6=${roll} → ${hit ? 'ENCOUNTER' : 'Clear'}`);
+
+  if (hit) {
+    setTimeout(doRollEncounter, 200);
+  }
+}
+
+function doRollEncounter() {
+  const context = document.getElementById('enc-context').value;
+  const region  = document.getElementById('enc-region').value;
+  const r = rollEncounter(context, region);
+
+  const contextLabels = {
+    wild: 'Wilderness Day', road: 'Road Day',
+    night_fire: 'Night (fire)', night_no_fire: 'Night (no fire)'
+  };
+
+  const reactionClass = r.reactionTotal <= 5 ? 'enc-bad' : r.reactionTotal >= 9 ? 'enc-good' : 'enc-neutral';
+
+  let html = `
+    <div style="margin-bottom:0.4rem;">
+      <span class="enc-type">${r.encType} · ${contextLabels[context]}</span>
+    </div>
+    <div class="enc-creature">${r.creature || '—'}</div>
+    <div style="margin-top:0.4rem;">
+      <div class="enc-row">
+        <span class="enc-lbl">Surprise</span>
+        <span class="enc-val ${r.partySurprised ? 'enc-bad' : ''}">
+          1d6=${r.surpriseRoll} — ${r.partySurprised ? '⚠ Party surprised!' : 'Not surprised'}
+        </span>
+      </div>
+      <div class="enc-row">
+        <span class="enc-lbl">Distance</span>
+        <span class="enc-val">2d6 [${r.distD1}+${r.distD2}] = ${r.distFt} ft (${Math.round(r.distFt*0.3)} m)</span>
+      </div>
+      <div class="enc-row">
+        <span class="enc-lbl">Reaction</span>
+        <span class="enc-val ${reactionClass}">
+          2d6 [${r.reactionD1}+${r.reactionD2}]=${r.reactionTotal} — ${r.reaction.text}
+        </span>
+      </div>
+      <div class="enc-row">
+        <span class="enc-lbl">Activity</span>
+        <span class="enc-val">${r.activity}</span>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('enc-result').innerHTML = html;
+  addLog('Encounter Rolled', `${r.creature} · ${r.reaction.text.split('—')[0].trim()}`);
+}
+
+// ---- Quick dice ----
+function quickRoll(sides) {
+  const roll = Math.ceil(Math.random() * sides);
+  document.getElementById('dice-result').innerHTML =
+    `<span class="w-dice">d${sides}</span> = <span class="w-result" style="font-size:1.2rem;">${roll}</span>`;
+  addLog(`d${sides}`, `= ${roll}`);
+}
+
+function quick2d6() {
+  const d1 = Math.ceil(Math.random() * 6);
+  const d2 = Math.ceil(Math.random() * 6);
+  const total = d1 + d2;
+  document.getElementById('dice-result').innerHTML =
+    `<span class="w-dice">2d6 [${d1}+${d2}]</span> = <span class="w-result" style="font-size:1.2rem;">${total}</span>`;
+  addLog('2d6', `[${d1}+${d2}] = ${total}`);
+}
+
+// ---- Public note ----
+function applyPublicNote() {
+  state.publicNote = document.getElementById('public-note-input').value.trim();
+  saveState(state);
+  document.getElementById('pub-note-preview').textContent = state.publicNote ? '📜 ' + state.publicNote : '';
+  addLog('Public Note', state.publicNote || '(cleared)');
+}
+
+function clearPublicNote() {
+  state.publicNote = '';
+  document.getElementById('public-note-input').value = '';
+  document.getElementById('pub-note-preview').textContent = '';
+  saveState(state);
+  addLog('Public Note', '(cleared)');
+}
+
+// ---- Init ----
+function init() {
+  loadLog();
+  populateMonthPicker();
+  renderRefToday();
+  renderLog();
+}
+
+init();
+</script>
+</body>
+</html>

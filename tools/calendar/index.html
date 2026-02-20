@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dolmenwood Calendar</title>
+  <link rel="stylesheet" href="css/folk.css">
+  <style>
+    /* Extra styles specific to the player view */
+    .year-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      color: #9a7c2e;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .month-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .month-nav-btn {
+      background: none;
+      border: 1px solid var(--parchment-deep);
+      color: var(--ink-faded);
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.7rem;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .month-nav-btn:hover {
+      border-color: var(--gold);
+      color: var(--crimson);
+      background: var(--parchment-dark);
+    }
+
+    /* Season-coloured month header backgrounds */
+    .season-bg-winter { background: linear-gradient(135deg, #e8eaf6 0%, #f4ead5 60%); }
+    .season-bg-spring { background: linear-gradient(135deg, #e8f5e9 0%, #f4ead5 60%); }
+    .season-bg-summer { background: linear-gradient(135deg, #fff8e1 0%, #f4ead5 60%); }
+    .season-bg-autumn { background: linear-gradient(135deg, #fbe9e7 0%, #f4ead5 60%); }
+
+    /* Today highlight in date banner */
+    .big-day {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      color: var(--crimson);
+      font-weight: 700;
+    }
+    .big-day-of {
+      font-family: 'Crimson Text', serif;
+      font-style: italic;
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: var(--ink-faded);
+    }
+
+    /* Footer flourish */
+    .footer-flourish {
+      text-align: center;
+      color: var(--gold);
+      font-size: 1.5rem;
+      letter-spacing: 0.6rem;
+      margin-top: 2rem;
+      opacity: 0.5;
+    }
+
+    /* Info grid below banner */
+    .info-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .info-chip {
+      background: rgba(154,124,46,0.12);
+      border: 1px solid var(--gold);
+      border-radius: 20px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.8rem;
+      color: var(--ink-faded);
+    }
+
+    .info-chip.red { background: rgba(139,26,26,0.1); border-color: var(--crimson); color: var(--crimson); }
+    .info-chip.blue { background: rgba(42,58,92,0.1); border-color: #2a3a5c; color: #2a3a5c; }
+
+    /* Upcoming events panel */
+    .upcoming-panel {
+      background: var(--parchment);
+      border: var(--border-med);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .upcoming-panel h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      color: var(--ink-faded);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      border-bottom: 1px dashed var(--parchment-deep);
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .event-list { list-style: none; }
+
+    .event-list li {
+      display: flex;
+      gap: 0.8rem;
+      padding: 0.3rem 0;
+      font-size: 0.88rem;
+      border-bottom: 1px dotted var(--parchment-deep);
+      align-items: baseline;
+    }
+    .event-list li:last-child { border-bottom: none; }
+
+    .event-date {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      color: var(--gold);
+      white-space: nowrap;
+      min-width: 5.5rem;
+    }
+
+    .event-desc {
+      color: var(--ink-faded);
+      font-style: italic;
+    }
+
+    .event-moon { font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-title">Dolmenwood</div>
+    <div class="site-subtitle">The Living Calendar of the Wood</div>
+  </header>
+
+  <!-- Current Day Banner -->
+  <div class="date-banner" id="date-banner">
+    <div class="year-label" id="year-label">Year of the Wood, <span id="year-num">1</span></div>
+    <div class="big-day" id="big-day">1st Colly</div>
+    <div class="big-day-of" id="big-day-of">of Grimvold · The Onset of Winter</div>
+    <div class="info-strip" id="info-strip"></div>
+    <div id="weather-display"></div>
+    <div id="public-note-display"></div>
+  </div>
+
+  <!-- Upcoming events -->
+  <div class="upcoming-panel">
+    <h3>⟡ Forthcoming Days of Note</h3>
+    <ul class="event-list" id="event-list">
+      <li><span class="event-date">—</span><span class="event-desc">No events found.</span></li>
+    </ul>
+  </div>
+
+  <!-- Calendar grid -->
+  <div class="calendar-wrapper" id="calendar-wrapper">
+    <!-- rendered by JS -->
+  </div>
+
+  <!-- Month navigation -->
+  <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:-0.5rem; margin-bottom:1.5rem;">
+    <button class="cal-nav-btn" id="btn-prev-month">◂ Previous Month</button>
+    <button class="cal-nav-btn" id="btn-next-month">Next Month ▸</button>
+  </div>
+
+  <!-- Footer -->
+  <div class="divider">✦ ✦ ✦</div>
+  <div class="page-nav">
+    <a href="referee.html">⚔ Referee's Chamber</a>
+  </div>
+  <div class="footer-flourish">❧ ✦ ❧</div>
+
+</div>
+
+<script src="js/calendar-data.js"></script>
+<script src="js/calendar-state.js"></script>
+<script>
+// ============================================================
+// Player View – index.html
+// ============================================================
+
+let state = loadState();
+let viewMonth = state.month; // which month is being displayed
+
+// ---- Ordinal suffix ----
+function ordinal(n) {
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+// ---- Season display name ----
+function seasonName(s) {
+  return { winter:'Winter', spring:'Spring', summer:'Summer', autumn:'Autumn' }[s] || s;
+}
+
+// ---- Moon symbol ----
+function moonSymbol(phase) {
+  if (phase === 'new')  return '<span class="moon-new" title="New Moon">🌑</span>';
+  if (phase === 'full') return '<span class="moon-full" title="Full Moon">🌕</span>';
+  return '';
+}
+
+// ---- Render the date banner (today) ----
+function renderBanner() {
+  const info = getDayInfo(state.month, state.day);
+  const m = info.month;
+  const doc = document;
+
+  doc.getElementById('year-num').textContent = state.year || 1;
+  if (state.yearLabel) {
+    doc.getElementById('year-label').textContent = state.yearLabel;
+  }
+
+  // Big day
+  let dayStr;
+  if (info.isWysenday && info.wysenday) {
+    dayStr = info.wysenday.name;
+  } else {
+    dayStr = ordinal(state.day) + ' ' + info.weekday;
+  }
+  doc.getElementById('big-day').textContent = dayStr;
+  doc.getElementById('big-day-of').textContent = 'of ' + m.name + ' · ' + m.subtitle;
+
+  // Info chips
+  const strip = doc.getElementById('info-strip');
+  strip.innerHTML = '';
+
+  const seasonChip = document.createElement('span');
+  seasonChip.className = 'info-chip';
+  seasonChip.textContent = seasonName(m.season);
+  strip.appendChild(seasonChip);
+
+  if (info.moonPhase) {
+    const moonChip = document.createElement('span');
+    moonChip.className = 'info-chip ' + (info.moonPhase === 'new' ? 'blue' : '');
+    moonChip.innerHTML = moonSymbol(info.moonPhase) + ' ' +
+      (info.moonPhase === 'new' ? 'New Moon' : 'Full Moon');
+    strip.appendChild(moonChip);
+  }
+
+  if (info.feast) {
+    const feastChip = document.createElement('span');
+    feastChip.className = 'info-chip red';
+    feastChip.textContent = info.feast;
+    strip.appendChild(feastChip);
+  }
+
+  // Weather
+  const weatherDiv = doc.getElementById('weather-display');
+  if (state.weatherText) {
+    let flagsHtml = '';
+    if (state.weatherFlags.I) flagsHtml += '<span class="flag flag-I">I</span>';
+    if (state.weatherFlags.V) flagsHtml += '<span class="flag flag-V">V</span>';
+    if (state.weatherFlags.W) flagsHtml += '<span class="flag flag-W">W</span>';
+    weatherDiv.innerHTML = `<div class="date-weather">☁ ${state.weatherText}${flagsHtml}</div>`;
+  } else {
+    weatherDiv.innerHTML = '';
+  }
+
+  // Public note
+  const noteDiv = doc.getElementById('public-note-display');
+  if (state.publicNote) {
+    noteDiv.innerHTML = `<div class="date-weather" style="margin-top:0.4rem;font-style:italic;">📜 ${state.publicNote}</div>`;
+  } else {
+    noteDiv.innerHTML = '';
+  }
+
+  // Season class on banner
+  const banner = doc.getElementById('date-banner');
+  banner.className = 'date-banner season-bg-' + m.season;
+}
+
+// ---- Render the calendar grid ----
+function renderCalendar() {
+  const wrapper = document.getElementById('calendar-wrapper');
+  const m = MONTHS[viewMonth - 1];
+  wrapper.className = 'calendar-wrapper season-bg-' + m.season;
+
+  let html = '';
+
+  // Month title
+  html += `<div class="month-nav">
+    <button class="month-nav-btn" onclick="prevMonth()">◂</button>
+    <div>
+      <div class="month-title season-${m.season}">${m.name}</div>
+      <div class="month-subtitle">${m.subtitle} · Month ${m.num}</div>
+    </div>
+    <button class="month-nav-btn" onclick="nextMonth()">▸</button>
+  </div>`;
+
+  // Weekday headers
+  html += '<div class="weekday-header">';
+  WEEKDAYS.forEach(w => {
+    html += `<div class="weekday-label">${w.substring(0,3)}</div>`;
+  });
+  html += '</div>';
+
+  // 4 weeks
+  html += '<div class="cal-weeks">';
+  for (let week = 0; week < 4; week++) {
+    html += '<div class="cal-week">';
+    for (let wd = 0; wd < 7; wd++) {
+      const dayNum = week * 7 + wd + 1;
+      const isToday = (viewMonth === state.month && dayNum === state.day);
+      const moon = (MOON_PHASES[viewMonth] || {})[dayNum] || null;
+      const feast = m.feasts[dayNum] || null;
+
+      html += `<div class="cal-cell${isToday ? ' today' : ''}" onclick="selectDay(${viewMonth},${dayNum})">`;
+      if (moon) html += `<span class="cell-moon">${moonSymbol(moon)}</span>`;
+      html += `<span class="cell-day-num">${ordinal(dayNum)}</span>`;
+      html += `<span class="cell-day-name">${WEEKDAYS[wd]}</span>`;
+      if (feast) html += `<span class="cell-feast">${feast}</span>`;
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>'; // cal-weeks
+
+  // Wysendays
+  if (m.wysendays.length > 0) {
+    html += '<div style="margin-top:0.5rem;">';
+    html += '<div class="weekday-label" style="margin-bottom:3px;letter-spacing:0.15em;">Wysendays</div>';
+    html += '<div class="cal-wysendays">';
+    m.wysendays.forEach(wd => {
+      const isToday = (viewMonth === state.month && wd.day === state.day);
+      const moon = (MOON_PHASES[viewMonth] || {})[wd.day] || null;
+      html += `<div class="cal-cell-wysen${isToday ? ' today' : ''}" onclick="selectDay(${viewMonth},${wd.day})">`;
+      if (moon) html += `<span class="cell-moon">${moonSymbol(moon)}</span>`;
+      html += `<span class="cell-day-num">${ordinal(wd.day)}</span>`;
+      html += `<span class="cell-day-name wysen-label">${wd.name}</span>`;
+      if (wd.feast) html += `<span class="cell-feast">${wd.feast}</span>`;
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Month notes
+  if (m.notes) {
+    html += `<div class="cal-notes-row">${m.notes}</div>`;
+  }
+
+  wrapper.innerHTML = html;
+}
+
+// ---- Render upcoming events (next 14 days) ----
+function renderUpcoming() {
+  const list = document.getElementById('event-list');
+  const events = [];
+  const todayAbs = dateToAbsolute(state.month, state.day);
+  const totalDays = yearLength();
+
+  for (let i = 1; i <= 30; i++) {
+    const abs = todayAbs + i;
+    if (abs > totalDays) break;
+    const { month, day } = absoluteToDate(abs);
+    const info = getDayInfo(month, day);
+    const m = info.month;
+
+    const moonPhase = (MOON_PHASES[month] || {})[day] || null;
+    const feast = m.feasts[day] || null;
+    let wysenName = null;
+    if (info.isWysenday && info.wysenday) wysenName = info.wysenday.name;
+
+    if (moonPhase || feast || wysenName) {
+      let desc = [];
+      if (moonPhase) desc.push((moonPhase === 'new' ? '🌑 New Moon' : '🌕 Full Moon'));
+      if (feast && !feast.startsWith('†')) desc.push(feast);
+      if (wysenName) desc.push(wysenName);
+      if (desc.length > 0) {
+        events.push({ month, day, monthName: m.name, desc: desc.join(' · '), weekday: info.weekday, isWysenday: info.isWysenday, daysAway: i });
+      }
+    }
+    if (events.length >= 8) break;
+  }
+
+  if (events.length === 0) {
+    list.innerHTML = '<li><span class="event-date">—</span><span class="event-desc">No notable events in the coming days.</span></li>';
+    return;
+  }
+
+  list.innerHTML = events.map(e => {
+    const dayLabel = e.isWysenday ? ordinal(e.day) : ordinal(e.day) + ' ' + e.weekday;
+    const inDays = e.daysAway === 1 ? 'tomorrow' : `in ${e.daysAway} days`;
+    return `<li>
+      <span class="event-date">${dayLabel} ${e.monthName}</span>
+      <span class="event-desc">${e.desc} <em style="font-size:0.75rem;color:#9a7c2e;">(${inDays})</em></span>
+    </li>`;
+  }).join('');
+}
+
+// ---- Navigation ----
+function selectDay(month, day) {
+  // In player view, just scroll to show – no editing
+  if (month !== viewMonth) {
+    viewMonth = month;
+    renderCalendar();
+  }
+}
+
+function prevMonth() {
+  viewMonth = viewMonth > 1 ? viewMonth - 1 : 12;
+  renderCalendar();
+}
+function nextMonth() {
+  viewMonth = viewMonth < 12 ? viewMonth + 1 : 1;
+  renderCalendar();
+}
+
+document.getElementById('btn-prev-month').addEventListener('click', prevMonth);
+document.getElementById('btn-next-month').addEventListener('click', nextMonth);
+
+// ---- Storage polling (refresh if state changes from referee page) ----
+function checkStateUpdate() {
+  const newState = loadState();
+  const changed = JSON.stringify(newState) !== JSON.stringify(state);
+  if (changed) {
+    state = newState;
+    renderBanner();
+    renderUpcoming();
+    if (viewMonth === state.month) renderCalendar();
+  }
+}
+
+// ---- Init ----
+function init() {
+  renderBanner();
+  renderCalendar();
+  renderUpcoming();
+  // Poll for state changes every 10 seconds (for live session use)
+  setInterval(checkStateUpdate, 10000);
+}
+
+init();
+</script>
+</body>
+</html>
