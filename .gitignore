@@ -31,3 +31,6 @@ skills/skills-openai/
 node_modules/
 dist/
 *.log
+
+# Calendar server state (runtime file, not source)
+tools/calendar/state.json

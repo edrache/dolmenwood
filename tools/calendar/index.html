@@ -152,7 +152,7 @@
 
   <!-- Current Day Banner -->
   <div class="date-banner" id="date-banner">
-    <div class="year-label" id="year-label">Year of the Wood, <span id="year-num">1</span></div>
+    <div class="year-label" id="year-label">Year 1</div>
     <div class="big-day" id="big-day">1st Colly</div>
     <div class="big-day-of" id="big-day-of">of Grimvold · The Onset of Winter</div>
     <div class="info-strip" id="info-strip"></div>
@@ -195,7 +195,7 @@
 // Player View – index.html
 // ============================================================
 
-let state = loadState();
+let state = loadState(); // synchronous local default; async init() will replace it
 let viewMonth = state.month; // which month is being displayed
 
 // ---- Ordinal suffix ----
@@ -223,20 +223,25 @@ function renderBanner() {
   const m = info.month;
   const doc = document;
 
-  doc.getElementById('year-num').textContent = state.year || 1;
+  const yearNum = state.year || 1;
+  const yearLabelEl = doc.getElementById('year-label');
   if (state.yearLabel) {
-    doc.getElementById('year-label').textContent = state.yearLabel;
+    yearLabelEl.textContent = state.yearLabel + ', Year ' + yearNum;
+  } else {
+    yearLabelEl.textContent = 'Year ' + yearNum;
   }
 
   // Big day
-  let dayStr;
+  let dayStr, dayOfStr;
   if (info.isWysenday && info.wysenday) {
     dayStr = info.wysenday.name;
+    dayOfStr = 'of ' + m.name + ' · ' + m.subtitle;
   } else {
-    dayStr = ordinal(state.day) + ' ' + info.weekday;
+    dayStr = ordinal(state.day) + ' of ' + m.name;
+    dayOfStr = info.weekday + ' · ' + m.subtitle;
   }
   doc.getElementById('big-day').textContent = dayStr;
-  doc.getElementById('big-day-of').textContent = 'of ' + m.name + ' · ' + m.subtitle;
+  doc.getElementById('big-day-of').textContent = dayOfStr;
 
   // Info chips
   const strip = doc.getElementById('info-strip');
@@ -260,6 +265,16 @@ function renderBanner() {
     feastChip.className = 'info-chip red';
     feastChip.textContent = info.feast;
     strip.appendChild(feastChip);
+  }
+
+  if (info.unseason) {
+    const unseasonChip = document.createElement('span');
+    unseasonChip.className = 'info-chip';
+    unseasonChip.style.background = 'rgba(200,100,20,0.12)';
+    unseasonChip.style.borderColor = '#c8640a';
+    unseasonChip.style.color = '#c8640a';
+    unseasonChip.textContent = '⚠ ' + info.unseason.unseason + ' roll (' + info.unseason.chance + ')';
+    strip.appendChild(unseasonChip);
   }
 
   // Weather
@@ -308,7 +323,7 @@ function renderCalendar() {
   // Weekday headers
   html += '<div class="weekday-header">';
   WEEKDAYS.forEach(w => {
-    html += `<div class="weekday-label">${w.substring(0,3)}</div>`;
+    html += `<div class="weekday-label">${w}</div>`;
   });
   html += '</div>';
 
@@ -321,12 +336,14 @@ function renderCalendar() {
       const isToday = (viewMonth === state.month && dayNum === state.day);
       const moon = (MOON_PHASES[viewMonth] || {})[dayNum] || null;
       const feast = m.feasts[dayNum] || null;
+      const unseason = (UNSEASON_DAYS[viewMonth] || {})[dayNum] || null;
 
       html += `<div class="cal-cell${isToday ? ' today' : ''}" onclick="selectDay(${viewMonth},${dayNum})">`;
       if (moon) html += `<span class="cell-moon">${moonSymbol(moon)}</span>`;
       html += `<span class="cell-day-num">${ordinal(dayNum)}</span>`;
       html += `<span class="cell-day-name">${WEEKDAYS[wd]}</span>`;
       if (feast) html += `<span class="cell-feast">${feast}</span>`;
+      if (unseason) html += `<span class="cell-feast" style="color:#c8640a;font-style:normal;">⚠ ${unseason.unseason}</span>`;
       html += '</div>';
     }
     html += '</div>';
@@ -426,9 +443,9 @@ function nextMonth() {
 document.getElementById('btn-prev-month').addEventListener('click', prevMonth);
 document.getElementById('btn-next-month').addEventListener('click', nextMonth);
 
-// ---- Storage polling (refresh if state changes from referee page) ----
-function checkStateUpdate() {
-  const newState = loadState();
+// ---- Server polling (refresh if state changes from referee page) ----
+async function checkStateUpdate() {
+  const { state: newState } = await fetchState();
   const changed = JSON.stringify(newState) !== JSON.stringify(state);
   if (changed) {
     state = newState;
@@ -439,7 +456,9 @@ function checkStateUpdate() {
 }
 
 // ---- Init ----
-function init() {
+async function init() {
+  const { state: loaded } = await fetchState();
+  state = loaded;
   renderBanner();
   renderCalendar();
   renderUpcoming();

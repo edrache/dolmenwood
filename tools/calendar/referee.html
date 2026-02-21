@@ -261,6 +261,143 @@
     .log-title { color: #c9a84c; font-family: 'Cinzel', serif; font-size: 0.75rem; }
     .log-body-text { color: #a09070; }
 
+    /* Mini calendar picker */
+    .mini-cal-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+    .mini-cal-nav-btn {
+      background: none;
+      border: 1px solid #4a3010;
+      color: #8a7a55;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .mini-cal-nav-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+    .mini-cal-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      color: #c9a84c;
+      text-align: center;
+    }
+    .mini-cal-title small {
+      display: block;
+      font-size: 0.62rem;
+      color: #6a5a35;
+      letter-spacing: 0.05em;
+    }
+    .mini-cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 2px;
+    }
+    .mini-cal-wd {
+      font-family: 'Cinzel', serif;
+      font-size: 0.52rem;
+      color: #4a3a20;
+      text-align: center;
+      padding: 1px 0;
+      letter-spacing: 0;
+    }
+    .mini-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .mini-cal-cell {
+      background: #0e0a04;
+      border: 1px solid #2a1e0e;
+      border-radius: 2px;
+      padding: 3px 1px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.12s;
+      position: relative;
+    }
+    .mini-cal-cell:hover { background: #2a1e0e; border-color: #6a5020; }
+    .mini-cal-cell.today-cell { border-color: #c9a84c; background: #201808; }
+    .mini-cal-cell .mc-num {
+      display: block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.68rem;
+      color: #d4c49a;
+      line-height: 1.2;
+    }
+    .mini-cal-cell .mc-moon {
+      font-size: 0.6rem;
+      line-height: 1;
+    }
+    .mini-cal-cell.has-feast { border-color: #6a4a10; }
+    .mc-feast-dot {
+      display: block;
+      font-size: 0.75rem;
+      line-height: 0.8;
+      color: #c9a84c;
+      font-weight: 700;
+    }
+    .mc-unseason-dot {
+      color: #e07a20;
+      font-size: 0.6rem;
+    }
+    .mini-cal-wysen {
+      display: flex;
+      gap: 2px;
+      margin-top: 4px;
+    }
+    .mini-cal-wysen-cell {
+      flex: 1;
+      background: #0e0a04;
+      border: 1px solid #3a2010;
+      border-radius: 2px;
+      padding: 3px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .mini-cal-wysen-cell:hover { background: #2a1e0e; border-color: #6a5020; }
+    .mini-cal-wysen-cell.today-cell { border-color: #c9a84c; background: #201808; }
+    .mini-cal-wysen-cell .mc-wname {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      color: #c9a84c;
+    }
+    .mini-cal-wysen-cell .mc-wday {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      color: #6a5a35;
+    }
+    .mini-cal-year-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .mini-cal-year-row label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      color: #6a5a35;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .mini-cal-year-row input {
+      width: 56px;
+      background: #0e0a04;
+      border: 1px solid #4a3010;
+      color: #d4c49a;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.4rem;
+      border-radius: 3px;
+    }
+    .mini-cal-year-row input:focus { outline: 1px solid #c9a84c; }
+
     /* Season selector row */
     .season-row {
       display: flex;
@@ -328,6 +465,9 @@
     <div class="site-subtitle" style="font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.2em;color:#6a5a35;text-transform:uppercase;">
       Dolmenwood · Campaign Calendar
     </div>
+    <div id="sync-status" style="margin-top:0.4rem;font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;">
+      <span id="sync-dot">⬤</span> <span id="sync-label">Łączenie…</span>
+    </div>
   </header>
 
   <div class="ref-layout">
@@ -350,15 +490,13 @@
 
         <hr style="border:none;border-top:1px solid #2a2010;margin:0.5rem 0;">
 
-        <!-- Manual date set -->
-        <div style="font-family:'Cinzel',serif;font-size:0.65rem;color:#6a5a35;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;">Set Date Manually</div>
-        <div class="date-picker">
-          <select id="pick-month" onchange="updatePickDay()">
-            <!-- filled by JS -->
-          </select>
-          <input id="pick-day" type="number" min="1" max="31" value="1" style="width:60px;">
-          <input id="pick-year" type="number" min="1" max="999" value="1" style="width:60px;">
-          <button class="small-btn" onclick="applyDatePick()">Set</button>
+        <!-- Mini calendar picker -->
+        <div style="font-family:'Cinzel',serif;font-size:0.65rem;color:#6a5a35;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.5rem;">Set Date</div>
+        <div id="mini-cal"></div>
+        <div class="mini-cal-year-row">
+          <label>Year</label>
+          <input id="pick-year" type="number" min="1" max="999" value="1">
+          <button class="small-btn" onclick="applyYearNum()">Set</button>
         </div>
 
         <!-- Year label -->
@@ -564,21 +702,25 @@ function clearLog() {
 function renderRefToday() {
   const info = getDayInfo(state.month, state.day);
   const m = info.month;
-  let dayStr;
+  let dayStr, daySubStr;
   if (info.isWysenday && info.wysenday) {
     dayStr = info.wysenday.name;
+    daySubStr = m.name + ' · ' + m.subtitle + ' · Year ' + (state.year || 1);
   } else {
-    dayStr = ordinal(state.day) + ' ' + info.weekday;
+    dayStr = ordinal(state.day) + ' of ' + m.name;
+    daySubStr = info.weekday + ' · ' + m.subtitle + ' · Year ' + (state.year || 1);
   }
 
   const moonPhase = (MOON_PHASES[state.month] || {})[state.day] || null;
   const feast = m.feasts[state.day] || null;
 
   let html = `<div class="ref-today-main">${dayStr}</div>`;
-  html += `<div class="ref-today-sub">${m.name} · ${m.subtitle} · Year ${state.year || 1}</div>`;
+  html += `<div class="ref-today-sub">${daySubStr}</div>`;
   if (state.yearLabel) html += `<div style="font-size:0.7rem;color:#6a5a35;margin-top:0.1rem;">${state.yearLabel}</div>`;
   if (moonPhase) html += `<div class="ref-today-moon">${moonSym(moonPhase)}</div>`;
   if (feast) html += `<div class="ref-today-feast">${feast}</div>`;
+  const unseason = (UNSEASON_DAYS[state.month] || {})[state.day] || null;
+  if (unseason) html += `<div class="ref-today-feast" style="color:#e07a20;">⚠ Roll for ${unseason.unseason} (${unseason.chance})</div>`;
 
   // Current weather if set
   if (state.weatherText) {
@@ -592,8 +734,6 @@ function renderRefToday() {
   document.getElementById('ref-today').innerHTML = html;
 
   // Sync inputs
-  document.getElementById('pick-month').value = state.month;
-  document.getElementById('pick-day').value = state.day;
   document.getElementById('pick-year').value = state.year || 1;
   if (state.yearLabel) document.getElementById('year-label-input').value = state.yearLabel;
   if (state.publicNote) {
@@ -635,52 +775,115 @@ function setSeasonOverride(s) {
 function doAdvanceDay() {
   const prev = getDayInfo(state.month, state.day);
   state = advanceDay(state);
-  saveState(state);
+  syncSave(state);
   renderRefToday();
   addLog('Day Advanced', ordinal(state.day) + ' ' + MONTHS[state.month-1].name);
 }
 
 function doRetreatDay() {
   state = retreatDay(state);
-  saveState(state);
+  syncSave(state);
   renderRefToday();
   addLog('Day Retreated', ordinal(state.day) + ' ' + MONTHS[state.month-1].name);
 }
 
-// ---- Month picker population ----
-function populateMonthPicker() {
-  const sel = document.getElementById('pick-month');
-  sel.innerHTML = MONTHS.map(m =>
-    `<option value="${m.num}">${m.num}. ${m.name}</option>`
-  ).join('');
-  sel.value = state.month;
+// ---- Mini calendar picker ----
+let miniCalMonth = state.month; // which month the mini-cal is showing
+
+function renderMiniCal() {
+  const m = MONTHS[miniCalMonth - 1];
+  const container = document.getElementById('mini-cal');
+
+  let html = '';
+
+  // Nav header
+  html += `<div class="mini-cal-nav">
+    <button class="mini-cal-nav-btn" onclick="miniCalPrev()">◂</button>
+    <div class="mini-cal-title">
+      ${m.name}
+      <small>${m.subtitle}</small>
+    </div>
+    <button class="mini-cal-nav-btn" onclick="miniCalNext()">▸</button>
+  </div>`;
+
+  // Weekday labels (abbreviated to 2 chars)
+  html += '<div class="mini-cal-weekdays">';
+  WEEKDAYS.forEach(w => {
+    html += `<div class="mini-cal-wd">${w.slice(0,2)}</div>`;
+  });
+  html += '</div>';
+
+  // 4 weeks grid
+  html += '<div class="mini-cal-grid">';
+  for (let i = 1; i <= 28; i++) {
+    const isToday = (miniCalMonth === state.month && i === state.day);
+    const moon = (MOON_PHASES[miniCalMonth] || {})[i] || null;
+    const feast = m.feasts[i] || null;
+    const unseason = (UNSEASON_DAYS[miniCalMonth] || {})[i] || null;
+    const moonHtml = moon === 'new' ? '<span class="mc-moon">🌑</span>'
+                   : moon === 'full' ? '<span class="mc-moon">🌕</span>' : '';
+    const feastDot = feast ? `<span class="mc-feast-dot" title="${feast}">·</span>` : '';
+    const unseasonDot = unseason ? `<span class="mc-feast-dot mc-unseason-dot" title="⚠ ${unseason.unseason} (${unseason.chance})">!</span>` : '';
+    const titleAttr = feast ? ` title="${feast}"` : (unseason ? ` title="⚠ ${unseason.unseason} (${unseason.chance})"` : '');
+    html += `<div class="mini-cal-cell${isToday ? ' today-cell' : ''}${feast ? ' has-feast' : ''}" onclick="miniCalPick(${miniCalMonth},${i})"${titleAttr}>
+      ${moonHtml}<span class="mc-num">${i}</span>${feastDot}${unseasonDot}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Wysendays
+  if (m.wysendays.length > 0) {
+    html += '<div class="mini-cal-wysen">';
+    m.wysendays.forEach(wd => {
+      const isToday = (miniCalMonth === state.month && wd.day === state.day);
+      const moon = (MOON_PHASES[miniCalMonth] || {})[wd.day] || null;
+      const moonHtml = moon === 'new' ? '🌑 ' : moon === 'full' ? '🌕 ' : '';
+      html += `<div class="mini-cal-wysen-cell${isToday ? ' today-cell' : ''}" onclick="miniCalPick(${miniCalMonth},${wd.day})">
+        <div class="mc-wname">${moonHtml}${wd.name}</div>
+        <div class="mc-wday">${ordinal(wd.day)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
 }
 
-function updatePickDay() {
-  const m = parseInt(document.getElementById('pick-month').value);
-  const maxDay = getMonthLength(m);
-  const dayInput = document.getElementById('pick-day');
-  dayInput.max = maxDay;
-  if (parseInt(dayInput.value) > maxDay) dayInput.value = maxDay;
+function miniCalPrev() {
+  miniCalMonth = miniCalMonth > 1 ? miniCalMonth - 1 : 12;
+  renderMiniCal();
 }
 
-function applyDatePick() {
-  const m = parseInt(document.getElementById('pick-month').value);
-  const d = Math.max(1, Math.min(parseInt(document.getElementById('pick-day').value), getMonthLength(m)));
+function miniCalNext() {
+  miniCalMonth = miniCalMonth < 12 ? miniCalMonth + 1 : 1;
+  renderMiniCal();
+}
+
+function miniCalPick(month, day) {
   const y = Math.max(1, parseInt(document.getElementById('pick-year').value) || 1);
-  state.month = m;
-  state.day = d;
+  state.month = month;
+  state.day = day;
   state.year = y;
   state.weatherText = '';
   state.weatherFlags = { I: false, V: false, W: false };
-  saveState(state);
+  miniCalMonth = month;
+  syncSave(state);
   renderRefToday();
-  addLog('Date Set', ordinal(d) + ' ' + MONTHS[m-1].name + ', Year ' + y);
+  renderMiniCal();
+  addLog('Date Set', ordinal(day) + ' ' + MONTHS[month-1].name + ', Year ' + y);
+}
+
+function applyYearNum() {
+  const y = Math.max(1, parseInt(document.getElementById('pick-year').value) || 1);
+  state.year = y;
+  syncSave(state);
+  renderRefToday();
+  addLog('Year Set', 'Year ' + y);
 }
 
 function applyYearLabel() {
   state.yearLabel = document.getElementById('year-label-input').value.trim();
-  saveState(state);
+  syncSave(state);
   renderRefToday();
 }
 
@@ -711,7 +914,7 @@ function doRollWeather() {
   setBtn.onclick = () => {
     state.weatherText = result.text;
     state.weatherFlags = { I: result.I, V: result.V, W: result.W };
-    saveState(state);
+    syncSave(state);
     renderRefToday();
     addLog('Weather Set', result.text + (result.I?' [I]':'') + (result.V?' [V]':'') + (result.W?' [W]':''));
     document.getElementById('weather-result').querySelector('button')?.remove();
@@ -730,7 +933,7 @@ function applyCustomWeather() {
     V: document.getElementById('flag-V').checked,
     W: document.getElementById('flag-W').checked,
   };
-  saveState(state);
+  syncSave(state);
   renderRefToday();
   addLog('Weather Set (Custom)', text);
 }
@@ -742,7 +945,7 @@ function clearWeather() {
   document.getElementById('flag-I').checked = false;
   document.getElementById('flag-V').checked = false;
   document.getElementById('flag-W').checked = false;
-  saveState(state);
+  syncSave(state);
   renderRefToday();
   addLog('Weather Cleared', '—');
 }
@@ -832,7 +1035,7 @@ function quick2d6() {
 // ---- Public note ----
 function applyPublicNote() {
   state.publicNote = document.getElementById('public-note-input').value.trim();
-  saveState(state);
+  syncSave(state);
   document.getElementById('pub-note-preview').textContent = state.publicNote ? '📜 ' + state.publicNote : '';
   addLog('Public Note', state.publicNote || '(cleared)');
 }
@@ -841,15 +1044,67 @@ function clearPublicNote() {
   state.publicNote = '';
   document.getElementById('public-note-input').value = '';
   document.getElementById('pub-note-preview').textContent = '';
-  saveState(state);
+  syncSave(state);
   addLog('Public Note', '(cleared)');
 }
 
+// ---- Server sync status ----
+function setSyncStatus(online, msg) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  dot.style.color = online ? '#6abf69' : '#bf6a6a';
+  label.textContent = msg;
+}
+
+// ---- Referee token ----
+let refToken = sessionStorage.getItem('ref_token') || '';
+
+function ensureToken() {
+  if (!refToken) {
+    refToken = prompt('Referee token (z pliku .env):') || '';
+    if (refToken) sessionStorage.setItem('ref_token', refToken);
+  }
+  return refToken;
+}
+
+// ---- Async save (server + localStorage) ----
+async function syncSave(state) {
+  const token = ensureToken();
+  const { ok, fromServer, error } = await pushState(state, token);
+  if (!fromServer) {
+    setSyncStatus(false, 'Offline – zapisano lokalnie');
+  } else if (!ok) {
+    if (error === 'Zły token') {
+      setSyncStatus(false, 'Błędny token!');
+      refToken = '';
+      sessionStorage.removeItem('ref_token');
+    } else {
+      setSyncStatus(false, `Błąd: ${error}`);
+    }
+  } else {
+    setSyncStatus(true, 'Zsynchronizowano ✓');
+  }
+}
+
 // ---- Init ----
-function init() {
+async function init() {
   loadLog();
-  populateMonthPicker();
+
+  // Try loading from server first
+  const { state: loaded, fromServer } = await fetchState();
+  state = loaded;
+  miniCalMonth = state.month;
+
+  if (fromServer) {
+    setSyncStatus(true, 'Połączono z serwerem');
+    // Prompt for token on first load so it's ready for saves
+    ensureToken();
+  } else {
+    setSyncStatus(false, 'Serwer niedostępny – tryb offline');
+  }
+
   renderRefToday();
+  renderMiniCal();
   renderLog();
 }
 

@@ -14,7 +14,7 @@ const MONTH_SEASON = {
 };
 
 // Moon phases per month: { day: 'new'|'full' }
-// New moon ~day 4-5, Full moon ~day 18-19 (based on calendar)
+// Source: Dolmenwood Calendar PDF (December 2025 version)
 const MOON_PHASES = {
   1:  { 4:'new',  19:'full' },
   2:  { 4:'new',  18:'full' },
@@ -28,6 +28,27 @@ const MOON_PHASES = {
   10: { 4:'new',  19:'full' },
   11: { 4:'new',  19:'full' },
   12: { 5:'new',  19:'full' },
+};
+
+// Unseason roll chances: days within a month when the referee rolls for an unseason.
+// Format: { day: { unseason: 'name', chance: '1-in-N' } }
+// These are tracked separately from feasts to allow clean UI differentiation.
+const UNSEASON_DAYS = {
+  2:  { 1: { unseason: 'Vague', chance: '1-in-10' },
+        8: { unseason: 'Vague', chance: '1-in-10' },
+        15: { unseason: 'Vague', chance: '1-in-10' },
+        22: { unseason: 'Vague', chance: '1-in-10' } },
+  3:  { 1: { unseason: 'Vague', chance: '1-in-10' },
+        8: { unseason: 'Vague', chance: '1-in-10' },
+        15: { unseason: 'Vague', chance: '1-in-10' },
+        22: { unseason: 'Vague', chance: '1-in-10' } },
+  6:  { 1: { unseason: 'Colliggwyld', chance: '1-in-4' } },
+  9:  { 1: { unseason: 'Chame', chance: '1-in-20' },
+        2: { unseason: 'Chame', chance: '1-in-20' },
+        3: { unseason: 'Chame', chance: '1-in-20' },
+        4: { unseason: 'Chame', chance: '1-in-20' },
+        5: { unseason: 'Chame', chance: '1-in-20' } },
+  12: { 30: { unseason: 'Hitching', chance: '1-in-4' } },
 };
 
 const MONTHS = [
@@ -56,19 +77,16 @@ const MONTHS = [
     season: 'winter',
     color: '#1e2e4a',
     feasts: {
-      1:  '† 1-in-10 chance of Vague',
       2:  'Feast of St Waylord',
       3:  'Feast of St Gondyw',
-      8:  '† 1-in-10 chance of Vague',
       9:  'Feast of St Calafredus',
-      15: '† 1-in-10 chance of Vague · Feast of St Wynne',
+      15: 'Feast of St Wynne',
       19: 'Feast of St Albrith',
-      22: '† 1-in-10 chance of Vague',
       23: 'Feast of St Fredulus',
       28: 'Feast of St Eggort',
     },
     wysendays: [],
-    notes: '† 1-in-10 chance of a Vague beginning',
+    notes: '† 1-in-10 chance of a Vague beginning (days 1, 8, 15, 22)',
   },
   {
     num: 3, name: 'Haggryme', subtitle: 'The Fading of Winter',
@@ -77,13 +95,11 @@ const MONTHS = [
     feasts: {
       5:  'Feast of St Clister',
       6:  'Feast of St Ponch',
-      8:  '† 1-in-10 chance of Vague',
       11: 'Feast of St Flatius',
       12: 'Feast of St Quister',
       13: 'Feast of St Aeynid',
-      15: '† 1-in-10 chance of Vague',
       18: 'Feast of St Visyg',
-      22: '† 1-in-10 chance of Vague · Feast of St Pannard',
+      22: 'Feast of St Pannard',
       23: 'Feast of St Simone',
       25: 'Feast of St Sortia',
       27: 'Feast of St Pastery',
@@ -93,7 +109,7 @@ const MONTHS = [
       { day: 29, name: "Yarl's Day", feast: 'Feast of St Tumbel' },
       { day: 30, name: 'The Day of Virgins', feast: 'Feast of St Lillibeth' },
     ],
-    notes: '† 1-in-10 chance of a Vague beginning',
+    notes: '† 1-in-10 chance of a Vague beginning (days 1, 8, 15, 22)',
   },
   {
     num: 4, name: 'Symswald', subtitle: 'The Onset of Spring',
@@ -141,18 +157,16 @@ const MONTHS = [
     season: 'spring',
     color: '#2d4a2a',
     feasts: {
-      1:  '† 1-in-4 chance of Colliggwyld',
       3:  'Feast of St Gripe',
       9:  'Feast of St Puriphon',
       19: 'Feast of St Hildace',
       27: 'Feast of St Maternis',
-      30: '‡ End of Colliggwyld · Feast of St Waylaine',
     },
     wysendays: [
       { day: 29, name: 'Shortening' },
-      { day: 30, name: "Longshank's Day ‡", feast: 'Feast of St Waylaine' },
+      { day: 30, name: "Longshank's Day", feast: 'Feast of St Waylaine' },
     ],
-    notes: '† 1-in-4 chance of Colliggwyld beginning · ‡ End of Colliggwyld (if begun, see 1st of Iggwyld)',
+    notes: '† 1-in-4 chance of Colliggwyld beginning (day 1) · End of Colliggwyld on last day (Longshank\'s Day)',
   },
   {
     num: 7, name: 'Chysting', subtitle: 'The Onset of Summer',
@@ -165,7 +179,6 @@ const MONTHS = [
       18: 'Summer Solstice',
       20: 'Feast of St Dougan',
       27: 'Feast of St Sabian',
-      31: 'Feast of St Jubilant',
     },
     wysendays: [
       { day: 29, name: 'Bradging' },
@@ -198,11 +211,7 @@ const MONTHS = [
     season: 'summer',
     color: '#4a3a10',
     feasts: {
-      1:  '† 1-in-20 chance of Chame',
-      2:  '† 1-in-20 chance of Chame',
-      3:  '† 1-in-20 chance of Chame',
-      4:  '† 1-in-20 chance of Chame',
-      5:  '† 1-in-20 chance of Chame · Feast of St Willibart',
+      5:  'Feast of St Willibart',
       8:  'Feast of St Sanguine',
       10: 'Feast of St Benester',
       15: 'Feast of St Faxis',
@@ -210,7 +219,7 @@ const MONTHS = [
       28: 'Feast of St Galaunt',
     },
     wysendays: [],
-    notes: '† 1-in-20 chance of Chame beginning',
+    notes: '† 1-in-20 chance of Chame beginning (days 1–5)',
   },
   {
     num: 10, name: 'Reedwryme', subtitle: 'The Onset of Autumn',
@@ -263,13 +272,12 @@ const MONTHS = [
       21: 'Feast of St Gawain',
       25: 'Feast of St Thridgold',
       28: 'Feast of St Therese',
-      30: '† 1-in-4 chance of Hitching · The Hunting of the Winter Hart · Feast of St Willoffrith',
     },
     wysendays: [
       { day: 29, name: 'The Day of Doors', feast: 'Feast of St Habicus' },
-      { day: 30, name: 'Dolmenday †', feast: 'The Hunting of the Winter Hart · Feast of St Willoffrith' },
+      { day: 30, name: 'Dolmenday', feast: 'The Hunting of the Winter Hart · Feast of St Willoffrith' },
     ],
-    notes: '† 1-in-4 chance of Hitching beginning',
+    notes: '† 1-in-4 chance of Hitching beginning (Dolmenday)',
   },
 ];
 
@@ -280,7 +288,7 @@ function getMonthLength(monthNum) {
   return 28 + extra;
 }
 
-// Returns { month, day, weekday, isWysenday, feast, moonPhase, season }
+// Returns { month, day, weekday, isWysenday, wysenday, feast, moonPhase, season, unseason }
 function getDayInfo(monthNum, dayNum) {
   const m = MONTHS[monthNum - 1];
   const isWysenday = dayNum > 28;
@@ -295,6 +303,7 @@ function getDayInfo(monthNum, dayNum) {
 
   const feast = m.feasts[dayNum] || null;
   const moonPhase = (MOON_PHASES[monthNum] || {})[dayNum] || null;
+  const unseason = (UNSEASON_DAYS[monthNum] || {})[dayNum] || null;
 
   return {
     month: m,
@@ -305,6 +314,7 @@ function getDayInfo(monthNum, dayNum) {
     wysenday,
     feast,
     moonPhase,
+    unseason,
     season: m.season,
   };
 }

@@ -242,9 +242,9 @@ body {
 .weekday-label {
   text-align: center;
   font-family: 'Cinzel', serif;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--ink-faded);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 0.2rem 0;
 }
