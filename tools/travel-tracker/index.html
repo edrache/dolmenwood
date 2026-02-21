@@ -608,7 +608,7 @@
   </div>
   <div id="map-container">
     <div id="map-wrapper">
-      <img id="map-img" src="../../Maps/Referee/Dolmenwood Referee's Hex Map.png" alt="Dolmenwood Map">
+      <img id="map-img" src="" alt="Dolmenwood Map">
       <svg id="hex-svg"></svg>
     </div>
   </div>
@@ -1024,12 +1024,23 @@ function clearLog() {
 // ═══════════════════════════════════════════════════════════════
 // MAP SWITCHER
 // ═══════════════════════════════════════════════════════════════
+// Resolve Maps path relative to this file's location, works both locally and on server.
+// travel-tracker/ is always a sibling of Maps/ two levels up locally,
+// but on the server both live under /dolmenwood/ — detect via pathname.
+const _base = (() => {
+  const p = window.location.pathname; // e.g. /dolmenwood/travel-tracker/ or /tools/travel-tracker/
+  // Walk up two directory levels from current path
+  const parts = p.replace(/\/[^/]*$/, '').split('/').filter(Boolean);
+  parts.pop(); // remove travel-tracker
+  return '/' + parts.join('/') + '/Maps/';
+})();
+
 const MAPS = {
-  blank:   '../../Maps/Players/Dolmenwood Blank Hex Map.png',
-  player:  '../../Maps/Players/Dolmenwood Player\'s Map.png',
-  referee: '../../Maps/Referee/Dolmenwood Referee\'s Hex Map.png',
-  vtt:     '../../Maps/Referee/Dolmenwood VTT Hex Map.png',
-  'vtt-s': '../../Maps/Referee/Dolmenwood VTT Hex Map Settlements.png',
+  blank:   _base + 'Players/Dolmenwood Blank Hex Map.png',
+  player:  _base + 'Players/Dolmenwood Player\'s Map.png',
+  referee: _base + 'Referee/Dolmenwood Referee\'s Hex Map.png',
+  vtt:     _base + 'Referee/Dolmenwood VTT Hex Map.png',
+  'vtt-s': _base + 'Referee/Dolmenwood VTT Hex Map Settlements.png',
 };
 let currentMapKey = 'blank';
 
@@ -1301,6 +1312,9 @@ function fitMap() {
 }
 
 window.addEventListener('load', () => {
+  // Set initial map src dynamically (so _base is already computed)
+  switchMap('referee');
+
   const img = document.getElementById('map-img');
   const doInit = () => {
     const svg = document.getElementById('hex-svg');
