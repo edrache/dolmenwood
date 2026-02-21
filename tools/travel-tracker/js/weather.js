@@ -43,6 +43,8 @@ function recalcTP() {
 }
 
 function resetTP() {
+  // Advance calendar day if sync is enabled (async, fires and forgets display update)
+  if (typeof advanceCalendarDay === 'function') advanceCalendarDay();
   recalcTP();
   log(`<span class="log-info">New day – TP reset to ${state.tpMax}</span>`);
   updateTPBar();

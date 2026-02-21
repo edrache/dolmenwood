@@ -48,10 +48,18 @@ Deterministic execution scripts the AI orchestrates:
 #### `tools/travel-tracker/`
 
 A self-contained HTML/JS app for running the **Dolmenwood overland travel procedure**:
-- Click hexes on the map to track movement
-- Automated weather rolls, lost checks, random encounter checks
-- Travel Point (TP) tracking per OSE/Dolmenwood rules
-- Works offline in any browser — no server required
+- Click hexes on the map to track movement (current hex = yellow, target = green)
+- Automated weather rolls, lost checks, random encounter checks (creature, surprise, distance, reaction, activity)
+- Travel Point (TP) tracking per OSE/Dolmenwood rules; manual TP spinner; forced march support
+- Day/night toggle with campfire option (affects encounter type and distance)
+- Map layer switcher: Blank, Player's, Referee, VTT, VTT+Settlements
+- Calibration panel for hex grid alignment
+- Session log with collapsible travel blocks
+- **Calendar sync** — connects to `tools/calendar/` state:
+  - Displays current campaign date and season (loaded from calendar's localStorage / server API on startup)
+  - Toggle "Sync with Calendar" to keep the Season selector in sync with the calendar month
+  - "Reset TP (New Day)" button advances the calendar day automatically when sync is enabled
+- Run locally with `python3 -m http.server 8080` from the project root, then open `http://localhost:8080/tools/travel-tracker/`
 
 #### `tools/calendar/`
 
@@ -70,7 +78,8 @@ A two-page web app for tracking the **Dolmenwood in-world calendar**:
   - Quick dice (d4–d100, 2d6)
   - Public note field (shown on player view)
   - Session log with timestamps
-- State shared via `localStorage` — deploy on a shared server for live-session use
+- State shared via `localStorage` and optionally via Flask server API (`server.py`) — deploy on a shared server for live-session use
+- To run the sync server locally: `pip install -r tools/calendar/requirements.txt && python tools/calendar/server.py`
 
 ---
 

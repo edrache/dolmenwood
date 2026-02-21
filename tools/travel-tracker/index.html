@@ -453,6 +453,11 @@
 
   /* scroll hint */
   .hint { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
+
+  /* calendar sync status */
+  .sync-ok   { color: var(--green); }
+  .sync-err  { color: var(--red); }
+  .sync-off  { color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -543,6 +548,23 @@
       <label class="check-label" id="fire-row" style="display:none">
         <input type="checkbox" id="chk-fire" checked> Camp fire lit
       </label>
+    </div>
+
+    <!-- CALENDAR SYNC -->
+    <div class="card" id="card-cal-sync">
+      <h3>Campaign Day</h3>
+      <div class="hex-info-row">
+        <span class="label">Date</span>
+        <span class="value" id="disp-cal-date">—</span>
+      </div>
+      <div class="hex-info-row">
+        <span class="label">Season</span>
+        <span class="value" id="disp-cal-season">—</span>
+      </div>
+      <label class="check-label" style="margin-top:6px">
+        <input type="checkbox" id="chk-cal-sync"> Sync with Calendar
+      </label>
+      <div id="cal-sync-status" style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;display:none;"></div>
     </div>
 
     <!-- TRAVEL POINTS -->
@@ -649,6 +671,9 @@
 </div>
 
 <!-- ══════════════════════════════════════════════ SCRIPTS -->
+<!-- Calendar data + state (for sync) -->
+<script src="../calendar/js/calendar-data.js"></script>
+<script src="../calendar/js/calendar-state.js"></script>
 <!-- Data layers (no dependencies) -->
 <script src="js/data-hexes.js"></script>
 <script src="js/data-weather.js"></script>
@@ -1146,6 +1171,121 @@ function setTimeOfDay(mode) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// CALENDAR SYNC
+// ═══════════════════════════════════════════════════════════════
+let calSyncEnabled = false;
+let calState = null;  // last fetched calendar state
+
+const SEASON_MAP = {
+  winter: 'winter',
+  spring: 'spring',
+  summer: 'summer',
+  autumn: 'autumn',
+};
+
+// Map calendar season to travel-tracker season select value
+const CAL_SEASON_TO_SELECT = {
+  winter: 'winter',
+  spring: 'spring',
+  summer: 'summer',
+  autumn: 'autumn',
+};
+
+function calDateLabel(st) {
+  if (!st) return '—';
+  const months = (typeof MONTHS !== 'undefined') ? MONTHS : window.MONTHS;
+  if (!months) return '(no MONTHS)';
+  const m = months[st.month - 1];
+  if (!m) return `(bad month: ${st.month})`;
+  const day = st.day;
+  const suffix = ['th','st','nd','rd'];
+  const v = day % 100;
+  const ord = day + (suffix[(v-20)%10] || suffix[v] || suffix[0]);
+  return `${ord} ${m.name}, Y${st.year || 1}`;
+}
+
+function calSeasonLabel(st) {
+  if (!st) return '—';
+  const months = (typeof MONTHS !== 'undefined') ? MONTHS : window.MONTHS;
+  if (!months) return '—';
+  const m = months[st.month - 1];
+  if (!m) return '—';
+  return m.season.charAt(0).toUpperCase() + m.season.slice(1);
+}
+
+function applyCalState(st) {
+  calState = st;
+  document.getElementById('disp-cal-date').textContent = calDateLabel(st);
+  document.getElementById('disp-cal-season').textContent = calSeasonLabel(st);
+
+  if (calSyncEnabled && st) {
+    // Sync season selector
+    const season = MONTHS[st.month - 1]?.season;
+    const sel = document.getElementById('inp-season');
+    if (season && CAL_SEASON_TO_SELECT[season]) {
+      sel.value = CAL_SEASON_TO_SELECT[season];
+    }
+    // Sync weather flags if calendar has weather set
+    if (st.weatherFlags) {
+      state.weatherFlags = { ...st.weatherFlags };
+      updateWeatherDisplay();
+    }
+  }
+}
+
+function updateWeatherDisplay() {
+  // Update the "weather today" display in the TP card
+  const disp = document.getElementById('disp-weather');
+  if (calState && calState.weatherText) {
+    let flags = '';
+    if (state.weatherFlags.I) flags += ' <span class="weather-flag flag-I">I</span>';
+    if (state.weatherFlags.V) flags += ' <span class="weather-flag flag-V">V</span>';
+    if (state.weatherFlags.W) flags += ' <span class="weather-flag flag-W">W</span>';
+    disp.innerHTML = calState.weatherText + flags;
+  }
+  updateSidebar();
+}
+
+function setSyncStatus(msg, cls) {
+  const el = document.getElementById('cal-sync-status');
+  el.style.display = msg ? 'block' : 'none';
+  el.innerHTML = `<span class="${cls}">${msg}</span>`;
+}
+
+async function fetchAndApplyCalState() {
+  setSyncStatus('Syncing…', 'sync-off');
+  try {
+    const { state: st, fromServer } = await fetchState();
+    applyCalState(st);
+    setSyncStatus(fromServer ? '✓ Synced with server' : '✓ Loaded from local storage', 'sync-ok');
+  } catch(e) {
+    setSyncStatus('✗ Sync failed', 'sync-err');
+  }
+}
+
+function onCalSyncToggle() {
+  calSyncEnabled = document.getElementById('chk-cal-sync').checked;
+  const statusEl = document.getElementById('cal-sync-status');
+  if (calSyncEnabled) {
+    fetchAndApplyCalState();
+    statusEl.style.display = 'block';
+  } else {
+    setSyncStatus('Sync off', 'sync-off');
+  }
+}
+
+// Advance calendar day when "New Day" is pressed (if sync on)
+async function advanceCalendarDay() {
+  if (!calSyncEnabled || !calState) return;
+  const newSt = advanceDay(calState);
+  // Save locally (no referee token here — travel tracker is read/write local only)
+  saveState(newSt);
+  applyCalState(newSt);
+  setSyncStatus('✓ Day advanced (local only)', 'sync-ok');
+  log(`<span class="log-info">Calendar: day advanced to ${calDateLabel(newSt)}</span>`);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
 function fitMap() {
@@ -1184,6 +1324,19 @@ window.addEventListener('load', () => {
   document.getElementById('chk-fire').addEventListener('change', () => {
     state.hasFire = document.getElementById('chk-fire').checked;
   });
+
+  // Calendar sync toggle
+  document.getElementById('chk-cal-sync').addEventListener('change', onCalSyncToggle);
+
+  // Initial calendar state load (no sync, just display)
+  (async () => {
+    try {
+      const { state: st } = await fetchState();
+      calState = st;
+      document.getElementById('disp-cal-date').textContent = calDateLabel(st);
+      document.getElementById('disp-cal-season').textContent = calSeasonLabel(st);
+    } catch(e) { /* ignore — calendar might not be reachable */ }
+  })();
 });
 </script>
 </body>

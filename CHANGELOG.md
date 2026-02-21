@@ -9,6 +9,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.3.1] – 2026-02-21
+
+### Added
+- **`tools/travel-tracker/` – Calendar sync integration**
+  - New "Campaign Day" card in the sidebar displaying current campaign date and season (loaded from calendar state on startup — server API with localStorage fallback)
+  - "Sync with Calendar" toggle: when enabled, keeps the Season selector in sync with the active calendar month, and syncs weather flags (I/V/W) if weather was set in the calendar
+  - "Reset TP (New Day)" now automatically advances the calendar day (written to localStorage) when sync is enabled; status shown inline
+  - Imports `tools/calendar/js/calendar-data.js` and `calendar-state.js` for shared data model — no duplication
+
+---
+
 ## [0.3.0] – 2026-02-20
 
 ### Added
