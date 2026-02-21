@@ -17,6 +17,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - "Sync with Calendar" toggle: when enabled, keeps the Season selector in sync with the active calendar month, and syncs weather flags (I/V/W) if weather was set in the calendar
   - "Reset TP (New Day)" now automatically advances the calendar day (written to localStorage) when sync is enabled; status shown inline
   - Imports `tools/calendar/js/calendar-data.js` and `calendar-state.js` for shared data model — no duplication
+- **Server deploy** – map assets uploaded to `Maps/Referee/` and `Maps/Players/` on Cytrus
+
+### Fixed
+- **`tools/travel-tracker/` – Map path resolution on server**
+  - Replaced hardcoded `../../Maps/` with runtime `_base` computed from `window.location.pathname`
+  - Works correctly both locally (`/tools/Maps/`) and on server (`/dolmenwood/Maps/`)
+  - Initial map `src` now set dynamically on load instead of hardcoded in HTML
 
 ---
 
