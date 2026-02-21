@@ -34,3 +34,6 @@ dist/
 
 # Calendar server state (runtime file, not source)
 tools/calendar/state.json
+
+# Local-only deployment docs
+tools/calendar/DEPLOY.md
