@@ -459,6 +459,7 @@ async function checkStateUpdate() {
 async function init() {
   const { state: loaded } = await fetchState();
   state = loaded;
+  viewMonth = state.month;
   renderBanner();
   renderCalendar();
   renderUpcoming();
